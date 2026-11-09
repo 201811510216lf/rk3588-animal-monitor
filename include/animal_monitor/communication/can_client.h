@@ -16,19 +16,20 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/communication/can_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // SocketCAN 客户端：AF_CAN + SOCK_RAW + CAN_RAW，RAII 生命周期。
 class CanClient
 {
-  public:
+   public:
     // interface_name：SocketCAN 网络接口名（如 "can0"），由配置传入。
     explicit CanClient(std::string interface_name);
 
     // RAII：析构时关闭 socket。
     ~CanClient();
 
-    CanClient(const CanClient&) = delete;
+    CanClient(const CanClient&)            = delete;
     CanClient& operator=(const CanClient&) = delete;
 
     // socket(AF_CAN, SOCK_RAW, CAN_RAW) + bind 到接口（if_nametoa 语义：按名解析索引）。
@@ -48,7 +49,7 @@ class CanClient
     bool               IsOpen() const { return fd_ >= 0; }
     const std::string& InterfaceName() const { return interface_name_; }
 
-  private:
+   private:
     std::string interface_name_;
     int         fd_ = -1;
 };

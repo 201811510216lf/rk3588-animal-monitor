@@ -19,18 +19,19 @@
 #include "animal_monitor/thermal/mlx90640_math.h"
 #include "animal_monitor/thermal/thermal_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 class Mlx90640Client
 {
-  public:
+   public:
     // device_path：cdev 节点路径（如 /dev/mlx90640_0），由板卡配置决定，不硬编码默认值。
     explicit Mlx90640Client(std::string device_path);
 
     // RAII：析构时关闭文件描述符。
     ~Mlx90640Client();
 
-    Mlx90640Client(const Mlx90640Client&) = delete;
+    Mlx90640Client(const Mlx90640Client&)            = delete;
     Mlx90640Client& operator=(const Mlx90640Client&) = delete;
 
     // 打开 cdev（O_RDWR | O_CLOEXEC）并校验 ABI 版本（ioctl MLX_IOC_GET_ABI），
@@ -46,14 +47,14 @@ class Mlx90640Client
     // 幂等关闭（可重复调用）。
     void Close();
 
-    bool                       IsOpen() const { return fd_ >= 0; }
-    const Mlx90640EepromData&  Eeprom() const { return eeprom_; }
+    bool                      IsOpen() const { return fd_ >= 0; }
+    const Mlx90640EepromData& Eeprom() const { return eeprom_; }
 
-  private:
+   private:
     std::string        device_path_;
-    int                fd_         = -1;
+    int                fd_ = -1;
     Mlx90640EepromData eeprom_;
-    bool               eeprom_ok_  = false;
+    bool               eeprom_ok_ = false;
 };
 
 }  // namespace animal_monitor

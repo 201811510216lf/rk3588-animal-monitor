@@ -11,29 +11,31 @@
 
 #include <cmath>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // —— 物理/公式命名常量 ——
-constexpr float kVddNominal     = 3.3f;      // 器件标称电源电压（V）
-constexpr float kRefTempC       = 25.0f;     // 标定参考温度（°C）
-constexpr float kCelsiusToKelvin = 273.15f;  // °C → K 偏移
-constexpr float kScaleAlpha     = 1e-6f;     // 官方库 SCALEALPHA
-constexpr float kTwoPow18       = 262144.0f; // 2^18
-constexpr float kTwoPow14       = 16384.0f;  // 2^14
-constexpr float kKsTo4          = -0.0002f;  // 官方库硬编码 ksTo[4]（400°C 段斜率，UNVERIFIED）
-constexpr float kCtMaxC         = 400.0f;    // 量程上限拐点（°C）
-constexpr float kCtMinC         = -40.0f;    // 量程下限拐点（°C）
+constexpr float kVddNominal      = 3.3f;       // 器件标称电源电压（V）
+constexpr float kRefTempC        = 25.0f;      // 标定参考温度（°C）
+constexpr float kCelsiusToKelvin = 273.15f;    // °C → K 偏移
+constexpr float kScaleAlpha      = 1e-6f;      // 官方库 SCALEALPHA
+constexpr float kTwoPow18        = 262144.0f;  // 2^18
+constexpr float kTwoPow14        = 16384.0f;   // 2^14
+constexpr float kKsTo4           = -0.0002f;   // 官方库硬编码 ksTo[4]（400°C 段斜率，UNVERIFIED）
+constexpr float kCtMaxC          = 400.0f;     // 量程上限拐点（°C）
+constexpr float kCtMinC          = -40.0f;     // 量程下限拐点（°C）
 
 // —— 参数范围校验边界（宽限防呆，非物理标定；真实分布待板卡验证 UNVERIFIED）——
-constexpr float kKt1MinAbs = 0.5f;      // |Kt1| 下限（10 位有符号 ÷8 的编码最大 63.875）
-constexpr float kKt1MaxAbs = 64.0f;
-constexpr float kKt2MinAbs = 0.0005f;   // |Kt2| 下限（6 位有符号 ÷4096 的编码最大 0.0078125）
-constexpr float kKt2MaxAbs = 0.008f;
-constexpr float kAlphaTempMin = 1e-9f;  // 每像素 alphaTemp 下限（≤0 会使 1/x 发散）
+constexpr float kKt1MinAbs      = 0.5f;  // |Kt1| 下限（10 位有符号 ÷8 的编码最大 63.875）
+constexpr float kKt1MaxAbs      = 64.0f;
+constexpr float kKt2MinAbs      = 0.0005f;  // |Kt2| 下限（6 位有符号 ÷4096 的编码最大 0.0078125）
+constexpr float kKt2MaxAbs      = 0.008f;
+constexpr float kAlphaTempMin   = 1e-9f;     // 每像素 alphaTemp 下限（≤0 会使 1/x 发散）
 constexpr float kAlphaStoredMax = 65535.0f;  // alpha 归一化存储上限（uint16）
-constexpr int   kMaxScaleShift = 32;    // 归一化放大次数守卫（防非法 EEPROM 死循环）
+constexpr int   kMaxScaleShift  = 32;        // 归一化放大次数守卫（防非法 EEPROM 死循环）
 
 constexpr float kEmissivityMin = 0.05f;
 constexpr float kEmissivityMax = 1.0f;
@@ -65,25 +67,19 @@ int Sign16(std::uint16_t value)
 }
 
 // 2 的整数次幂（缩放因子）。
-float TwoPow(int shift)
-{
-    return std::ldexp(1.0f, shift);
-}
+float TwoPow(int shift) { return std::ldexp(1.0f, shift); }
 
 // 提取 4-bit 有符号值（>7 → -16）。
-int NibbleSigned(std::uint16_t word, int shift)
-{
-    return SignExtend((word >> shift) & 0xF, 4);
-}
+int NibbleSigned(std::uint16_t word, int shift) { return SignExtend((word >> shift) & 0xF, 4); }
 
 // —— 官方库 Extract* 的等价实现（word 索引 → 字节地址 0x2400 + 2n）——
 
 void ExtractVddParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
     // word 51（0x2466）：kVdd 高 8 位（int8 × 32）、vdd25 低 8 位（无符号 0..255，官方库语义）。
-    d->vdd_pixel = static_cast<float>(SignExtend(words[51] >> 8, 8) * 32);
+    d->vdd_pixel         = static_cast<float>(SignExtend(words[51] >> 8, 8) * 32);
     const int vdd25_byte = static_cast<int>(words[51] & 0xFF);
-    d->vdd25 = static_cast<float>(((vdd25_byte - 256) << 5) - 8192);
+    d->vdd25             = static_cast<float>(((vdd25_byte - 256) << 5) - 8192);
 }
 
 void ExtractPtatParameters(const std::uint16_t* words, Mlx90640EepromData* d)
@@ -92,7 +88,7 @@ void ExtractPtatParameters(const std::uint16_t* words, Mlx90640EepromData* d)
     d->kt2 = static_cast<float>(SignExtend((words[50] & 0xFC00) >> 10, 6)) / 4096.0f;
     d->kt1 = static_cast<float>(SignExtend(words[50] & 0x03FF, 10)) / 8.0f;
     // word 49（0x2462）：vPTAT25。word 16（0x2420）：alphaPTAT = 高 4 位 ÷2^14 + 8。
-    d->v_ptat25 = static_cast<float>(words[49]);
+    d->v_ptat25   = static_cast<float>(words[49]);
     d->alpha_ptat = static_cast<float>(words[16] & 0xF000) / kTwoPow14 + 8.0f;
 }
 
@@ -124,23 +120,23 @@ void ExtractKsToParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
     // word 63（0x247E）：step 位 13:12（无符号 ×10）、ct2 位 7:4、ct3 位 11:8、KsToScale 位 3:0。
     const int step = static_cast<int>((words[63] & 0x3000) >> 12) * 10;
-    d->ct[0] = kCtMinC;
-    d->ct[1] = 0.0f;
-    d->ct[2] = static_cast<float>(((words[63] & 0x00F0) >> 4) * step);
-    d->ct[3] = d->ct[2] + static_cast<float>(((words[63] & 0x0F00) >> 8) * step);
+    d->ct[0]       = kCtMinC;
+    d->ct[1]       = 0.0f;
+    d->ct[2]       = static_cast<float>(((words[63] & 0x00F0) >> 4) * step);
+    d->ct[3]       = d->ct[2] + static_cast<float>(((words[63] & 0x0F00) >> 8) * step);
 
     const float ks_to_scale = TwoPow((words[63] & 0x000F) + 8);
-    d->ks_to[0] = static_cast<float>(SignExtend(words[61] & 0xFF, 8)) / ks_to_scale;
-    d->ks_to[1] = static_cast<float>(SignExtend(words[61] >> 8, 8)) / ks_to_scale;
-    d->ks_to[2] = static_cast<float>(SignExtend(words[62] & 0xFF, 8)) / ks_to_scale;
-    d->ks_to[3] = static_cast<float>(SignExtend(words[62] >> 8, 8)) / ks_to_scale;
+    d->ks_to[0]             = static_cast<float>(SignExtend(words[61] & 0xFF, 8)) / ks_to_scale;
+    d->ks_to[1]             = static_cast<float>(SignExtend(words[61] >> 8, 8)) / ks_to_scale;
+    d->ks_to[2]             = static_cast<float>(SignExtend(words[62] & 0xFF, 8)) / ks_to_scale;
+    d->ks_to[3]             = static_cast<float>(SignExtend(words[62] >> 8, 8)) / ks_to_scale;
 }
 
 void ExtractCpParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
     // word 57（0x2472）：cpAlpha；word 58（0x2474）：cpOffset；word 59（0x2476）：cpKta/cpKv。
     const float alpha_scale_cp = TwoPow(((words[32] >> 12) & 0xF) + 27);
-    d->cp_offset[0] = static_cast<float>(SignExtend(words[58] & 0x03FF, 10));
+    d->cp_offset[0]            = static_cast<float>(SignExtend(words[58] & 0x03FF, 10));
     d->cp_offset[1] = d->cp_offset[0] + static_cast<float>(SignExtend(words[58] >> 10, 6));
 
     d->cp_alpha[0] = static_cast<float>(SignExtend(words[57] & 0x03FF, 10)) / alpha_scale_cp;
@@ -149,28 +145,28 @@ void ExtractCpParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 
     const float kta_scale1 = TwoPow(((words[56] & 0x00F0) >> 4) + 8);
     const float kv_scale   = TwoPow((words[56] >> 8) & 0xF);
-    d->cp_kta = static_cast<float>(SignExtend(words[59] & 0xFF, 8)) / kta_scale1;
-    d->cp_kv  = static_cast<float>(SignExtend(words[59] >> 8, 8)) / kv_scale;
+    d->cp_kta              = static_cast<float>(SignExtend(words[59] & 0xFF, 8)) / kta_scale1;
+    d->cp_kv               = static_cast<float>(SignExtend(words[59] >> 8, 8)) / kv_scale;
 }
 
 void ExtractCilcParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
     // word 10（0x2414）位 11：校准模式；word 53（0x246A）：棋盘模式系数。
     d->calibration_mode_ee = static_cast<std::uint8_t>(((words[10] & 0x0800) >> 4) ^ 0x80);
-    d->il_chess_c[0] = static_cast<float>(SignExtend(words[53] & 0x003F, 6)) / 16.0f;
-    d->il_chess_c[1] = static_cast<float>(SignExtend((words[53] & 0x07C0) >> 6, 5)) / 2.0f;
-    d->il_chess_c[2] = static_cast<float>(SignExtend((words[53] & 0xF800) >> 11, 5)) / 8.0f;
+    d->il_chess_c[0]       = static_cast<float>(SignExtend(words[53] & 0x003F, 6)) / 16.0f;
+    d->il_chess_c[1]       = static_cast<float>(SignExtend((words[53] & 0x07C0) >> 6, 5)) / 2.0f;
+    d->il_chess_c[2]       = static_cast<float>(SignExtend((words[53] & 0xF800) >> 11, 5)) / 8.0f;
 }
 
 // 每像素 alpha：word 32/33/34-47 + 每像素 word（位 9:4，int6）。
 // 校验 Alpha 区间：alphaTemp 必须 > kAlphaTempMin，归一化存储值 ∈ [1, 65535]。
 bool ExtractAlphaParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
-    const int acc_rem_scale    = words[32] & 0x000F;
-    const int acc_column_scale = (words[32] & 0x00F0) >> 4;
-    const int acc_row_scale    = (words[32] & 0x0F00) >> 8;
-    const float alpha_scale_ee = TwoPow(((words[32] & 0xF000) >> 12) + 30);
-    const float alpha_ref      = static_cast<float>(words[33]);
+    const int   acc_rem_scale    = words[32] & 0x000F;
+    const int   acc_column_scale = (words[32] & 0x00F0) >> 4;
+    const int   acc_row_scale    = (words[32] & 0x0F00) >> 8;
+    const float alpha_scale_ee   = TwoPow(((words[32] & 0xF000) >> 12) + 30);
+    const float alpha_ref        = static_cast<float>(words[33]);
 
     int acc_row[24] = {};
     for (int i = 0; i < 6; ++i)
@@ -242,10 +238,10 @@ bool ExtractAlphaParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 // 每像素偏置：word 16/17/18-31 + 每像素 word（位 15:10，int6）。
 bool ExtractOffsetParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
-    const int occ_rem_scale    = words[16] & 0x000F;
-    const int occ_column_scale = (words[16] & 0x00F0) >> 4;
-    const int occ_row_scale    = (words[16] & 0x0F00) >> 8;
-    const float offset_ref     = static_cast<float>(SignExtend(words[17], 16));
+    const int   occ_rem_scale    = words[16] & 0x000F;
+    const int   occ_column_scale = (words[16] & 0x00F0) >> 4;
+    const int   occ_row_scale    = (words[16] & 0x0F00) >> 8;
+    const float offset_ref       = static_cast<float>(SignExtend(words[17], 16));
 
     int occ_row[24] = {};
     for (int i = 0; i < 6; ++i)
@@ -281,10 +277,10 @@ bool ExtractOffsetParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 bool ExtractKtaPixelParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
     int kta_rc[4];
-    kta_rc[0] = SignExtend(words[54] >> 8, 8);  // 奇行奇列
-    kta_rc[2] = SignExtend(words[54] & 0xFF, 8); // 偶行奇列
-    kta_rc[1] = SignExtend(words[55] >> 8, 8);  // 奇行偶列
-    kta_rc[3] = SignExtend(words[55] & 0xFF, 8); // 偶行偶列
+    kta_rc[0] = SignExtend(words[54] >> 8, 8);    // 奇行奇列
+    kta_rc[2] = SignExtend(words[54] & 0xFF, 8);  // 偶行奇列
+    kta_rc[1] = SignExtend(words[55] >> 8, 8);    // 奇行偶列
+    kta_rc[3] = SignExtend(words[55] & 0xFF, 8);  // 偶行偶列
 
     const float kta_scale1 = TwoPow(((words[56] & 0x00F0) >> 4) + 8);
     const float kta_scale2 = TwoPow(words[56] & 0x000F);
@@ -296,8 +292,8 @@ bool ExtractKtaPixelParameters(const std::uint16_t* words, Mlx90640EepromData* d
         const int col   = p % kMlx90640Width;
         const int split = 2 * (row % 2) + col % 2;  // 官方库 2*(p/32 - (p/64)*2) + p%2
         float     v     = static_cast<float>(SignExtend((words[64 + p] & 0x000E) >> 1, 3));
-        v = v * kta_scale2 + static_cast<float>(kta_rc[split]);
-        kta_temp[p] = v / kta_scale1;
+        v               = v * kta_scale2 + static_cast<float>(kta_rc[split]);
+        kta_temp[p]     = v / kta_scale1;
     }
 
     float max_abs = 0.0f;
@@ -489,8 +485,8 @@ Status InterleaveSubpages(const std::uint16_t subpage0[kMlx90640PixelCount],
     {
         for (int col = 0; col < kMlx90640Width; ++col)
         {
-            const int p  = row * kMlx90640Width + col;
-            out[p]       = (row % 2 == 0) ? subpage0[p] : subpage1[p];
+            const int p = row * kMlx90640Width + col;
+            out[p]      = (row % 2 == 0) ? subpage0[p] : subpage1[p];
         }
     }
     return Status::MakeOk();
@@ -508,8 +504,7 @@ bool IsBrokenPixel(const Mlx90640EepromData& eeprom, std::uint32_t pixel)
     return false;
 }
 
-int ReplaceBrokenPixels(const Mlx90640EepromData& eeprom,
-                        std::uint16_t            frame[kMlx90640PixelCount])
+int ReplaceBrokenPixels(const Mlx90640EepromData& eeprom, std::uint16_t frame[kMlx90640PixelCount])
 {
     if (frame == nullptr)
     {
@@ -549,11 +544,11 @@ float CalcVdd(const Mlx90640EepromData& eeprom, std::uint16_t vdd_raw)
     {
         return std::nanf("");
     }
-    const float raw       = static_cast<float>(Sign16(vdd_raw));
-    const float res_ee    = TwoPow(eeprom.resolution_ee);
-    const float res_ram   = TwoPow(eeprom.resolution_ram == 0 ? eeprom.resolution_ee
-                                                              : eeprom.resolution_ram);
-    const float res_corr  = res_ee / res_ram;
+    const float raw    = static_cast<float>(Sign16(vdd_raw));
+    const float res_ee = TwoPow(eeprom.resolution_ee);
+    const float res_ram =
+        TwoPow(eeprom.resolution_ram == 0 ? eeprom.resolution_ee : eeprom.resolution_ram);
+    const float res_corr = res_ee / res_ram;
     return (res_corr * raw - eeprom.vdd25) / eeprom.vdd_pixel + kVddNominal;
 }
 
@@ -570,7 +565,7 @@ float CalcTa(const Mlx90640EepromData& eeprom, std::uint16_t ta_raw)
     {
         return std::nanf("");  // 分母为零守卫
     }
-    const float vdd      = CalcVdd(eeprom, eeprom.vdd_raw);
+    const float vdd       = CalcVdd(eeprom, eeprom.vdd_raw);
     const float ptat_calc = (ptat / denom) * kTwoPow18;
     const float ta =
         (ptat_calc / (1.0f + eeprom.kt2 * (vdd - kVddNominal)) - eeprom.v_ptat25) / eeprom.kt1 +
@@ -591,18 +586,17 @@ float TgcCompensation(const Mlx90640EepromData& eeprom, std::uint32_t pixel, std
         return 0.0f;  // 坏像素丢弃；调用方可先 ReplaceBrokenPixels 替换
     }
 
-    const int    gain_ram_s = Sign16(eeprom.gain_ram);
-    const float gain_ratio =
-        gain_ram_s > 0 ? eeprom.gain / static_cast<float>(gain_ram_s) : 1.0f;
+    const int   gain_ram_s = Sign16(eeprom.gain_ram);
+    const float gain_ratio = gain_ram_s > 0 ? eeprom.gain / static_cast<float>(gain_ram_s) : 1.0f;
 
     const float ta  = CalcTa(eeprom, eeprom.ta_raw);
     const float vdd = CalcVdd(eeprom, eeprom.vdd_raw);
 
-    float ir = static_cast<float>(Sign16(raw)) * gain_ratio;
+    float       ir  = static_cast<float>(Sign16(raw)) * gain_ratio;
     const float kta = eeprom.kta[pixel] / TwoPow(static_cast<int>(eeprom.kta_scale));
     const float kv  = eeprom.kv[pixel] / TwoPow(static_cast<int>(eeprom.kv_scale));
-    ir -= eeprom.pix_os[pixel] * (1.0f + kta * (ta - kRefTempC)) *
-          (1.0f + kv * (vdd - kVddNominal));
+    ir -=
+        eeprom.pix_os[pixel] * (1.0f + kta * (ta - kRefTempC)) * (1.0f + kv * (vdd - kVddNominal));
 
     // TGC 补偿：减去 tgc × 补偿像素信号（cp_pixel 经增益/偏置修正）。
     float cp = static_cast<float>(Sign16(eeprom.cp_pixel[subpage])) * gain_ratio;
@@ -625,32 +619,30 @@ float CalcTo(const Mlx90640EepromData& eeprom, std::uint32_t pixel, float v_ir_c
     }
 
     // 发射率截断到 [kEmissivityMin, kEmissivityMax]。
-    const float emissivity =
-        eeprom.emissivity < kEmissivityMin ? kEmissivityMin
-        : eeprom.emissivity > kEmissivityMax ? kEmissivityMax
-                                             : eeprom.emissivity;
-    const float ir_data = v_ir_comp / emissivity;
+    const float emissivity = eeprom.emissivity < kEmissivityMin   ? kEmissivityMin
+                             : eeprom.emissivity > kEmissivityMax ? kEmissivityMax
+                                                                  : eeprom.emissivity;
+    const float ir_data    = v_ir_comp / emissivity;
 
     // 反射温度 Tr 初稿取 Ta（任务书 CalcTo 无 Tr 入参；UNVERIFIED 假设）。
-    float ta4 = ta + kCelsiusToKelvin;
-    ta4       = ta4 * ta4;
-    ta4       = ta4 * ta4;
+    float ta4         = ta + kCelsiusToKelvin;
+    ta4               = ta4 * ta4;
+    ta4               = ta4 * ta4;
     const float ta_tr = ta4;  // Tr == Ta 时 tr4 - (tr4 - ta4)/e == ta4
 
     if (eeprom.alpha[pixel] <= 0.0f)
     {
         return std::nanf("");
     }
-    float alpha_comp = kScaleAlpha * TwoPow(static_cast<int>(eeprom.alpha_scale)) /
-                       eeprom.alpha[pixel];
+    float alpha_comp =
+        kScaleAlpha * TwoPow(static_cast<int>(eeprom.alpha_scale)) / eeprom.alpha[pixel];
     alpha_comp *= (1.0f + eeprom.ks_ta * (ta - kRefTempC));
 
     // 一次解算 + 分段校正（官方库 CalculateTo）。
-    float sx = alpha_comp * alpha_comp * alpha_comp * (ir_data + alpha_comp * ta_tr);
-    sx       = std::sqrt(std::sqrt(sx)) * eeprom.ks_to[1];
-    const float first_denom =
-        alpha_comp * (1.0f - eeprom.ks_to[1] * kCelsiusToKelvin) + sx;
-    float to = std::sqrt(std::sqrt(ir_data / first_denom + ta_tr)) - kCelsiusToKelvin;
+    float sx                = alpha_comp * alpha_comp * alpha_comp * (ir_data + alpha_comp * ta_tr);
+    sx                      = std::sqrt(std::sqrt(sx)) * eeprom.ks_to[1];
+    const float first_denom = alpha_comp * (1.0f - eeprom.ks_to[1] * kCelsiusToKelvin) + sx;
+    float       to = std::sqrt(std::sqrt(ir_data / first_denom + ta_tr)) - kCelsiusToKelvin;
 
     int range = 3;
     if (to < eeprom.ct[1])

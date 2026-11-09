@@ -18,30 +18,31 @@ using animal_monitor::fusion::AnimalTracker;
 using animal_monitor::fusion::Track;
 using animal_monitor::inference::Detection;
 
-namespace {
+namespace
+{
 
 Detection MakeDetection(float x, float y, float w, float h)
 {
     Detection detection;
-    detection.bbox.x      = x;
-    detection.bbox.y      = y;
-    detection.bbox.w      = w;
-    detection.bbox.h      = h;
-    detection.confidence  = 1.0f;
+    detection.bbox.x     = x;
+    detection.bbox.y     = y;
+    detection.bbox.w     = w;
+    detection.bbox.h     = h;
+    detection.confidence = 1.0f;
     return detection;
 }
 
 AM_TEST(keeps_id_across_overlapping_frames)
 {
-    AnimalTracker tracker;
-    const std::vector<Detection> first = {MakeDetection(0.0f, 0.0f, 10.0f, 10.0f)};
+    AnimalTracker                tracker;
+    const std::vector<Detection> first  = {MakeDetection(0.0f, 0.0f, 10.0f, 10.0f)};
     std::vector<Track>           tracks = tracker.Update(first, 0);
     AM_EXPECT_EQ(tracks.size(), 1u);
     const std::int32_t first_id = tracks[0].track_id;
 
     // 第二帧轻微位移，IoU 远高于默认阈值 0.3：应保持同一 ID
     const std::vector<Detection> second = {MakeDetection(1.0f, 1.0f, 10.0f, 10.0f)};
-    tracks = tracker.Update(second, 1);
+    tracks                              = tracker.Update(second, 1);
     AM_EXPECT_EQ(tracks.size(), 1u);
     AM_EXPECT_EQ(tracks[0].track_id, first_id);
     AM_EXPECT_EQ(tracks[0].miss_count, 0u);
@@ -50,7 +51,7 @@ AM_TEST(keeps_id_across_overlapping_frames)
 
 AM_TEST(new_box_gets_new_id)
 {
-    AnimalTracker tracker;
+    AnimalTracker                tracker;
     const std::vector<Detection> detections = {MakeDetection(0.0f, 0.0f, 10.0f, 10.0f),
                                                MakeDetection(100.0f, 100.0f, 10.0f, 10.0f)};
     const std::vector<Track>     tracks     = tracker.Update(detections, 0);
@@ -104,8 +105,8 @@ AM_TEST(max_tracks_capacity_trimmed)
     AnimalTracker tracker(config);
 
     const std::vector<Detection> detections = {
-        MakeDetection(0.0f, 0.0f, 10.0f, 10.0f),     MakeDetection(100.0f, 0.0f, 10.0f, 10.0f),
-        MakeDetection(200.0f, 0.0f, 10.0f, 10.0f),   MakeDetection(300.0f, 0.0f, 10.0f, 10.0f),
+        MakeDetection(0.0f, 0.0f, 10.0f, 10.0f), MakeDetection(100.0f, 0.0f, 10.0f, 10.0f),
+        MakeDetection(200.0f, 0.0f, 10.0f, 10.0f), MakeDetection(300.0f, 0.0f, 10.0f, 10.0f),
         MakeDetection(400.0f, 0.0f, 10.0f, 10.0f)};
     const std::vector<Track> tracks = tracker.Update(detections, 0);
     AM_EXPECT_EQ(tracks.size(), 3u);
@@ -126,7 +127,4 @@ AM_TEST(invalid_detection_skipped)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

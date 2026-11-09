@@ -24,12 +24,13 @@ using animal_monitor::inference::ModelManifest;
 using animal_monitor::inference::ModelRegistry;
 using animal_monitor::inference::VerifyManifestFileSha256;
 
-namespace {
+namespace
+{
 
 // 唯一临时目录；析构递归清理（error_code 静默，测试进程对 TEMP 有写权限）。
 class TempDir
 {
-  public:
+   public:
     TempDir()
     {
         const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
@@ -54,7 +55,7 @@ class TempDir
 
     std::string Dir() const { return path_.generic_string(); }
 
-  private:
+   private:
     std::filesystem::path path_;
 };
 

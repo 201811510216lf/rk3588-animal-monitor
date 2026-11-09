@@ -18,9 +18,11 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // 信号处理与 Application 的桥接：仅信号回调使用（C 回调无法捕获对象）。
 Application* g_active_application = nullptr;
@@ -28,8 +30,7 @@ Application* g_active_application = nullptr;
 #ifdef _WIN32
 BOOL WINAPI ConsoleCtrlHandler(DWORD ctrl_type)
 {
-    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT ||
-        ctrl_type == CTRL_CLOSE_EVENT)
+    if (ctrl_type == CTRL_C_EVENT || ctrl_type == CTRL_BREAK_EVENT || ctrl_type == CTRL_CLOSE_EVENT)
     {
         if (g_active_application != nullptr)
         {
@@ -51,9 +52,7 @@ extern "C" void SignalHandler(int signal_number)
 
 }  // namespace
 
-Application::Application(std::string config_path) : config_path_(std::move(config_path))
-{
-}
+Application::Application(std::string config_path) : config_path_(std::move(config_path)) {}
 
 Status Application::Initialize()
 {
@@ -100,10 +99,9 @@ Status Application::Initialize()
 
 Status Application::RegisterServices()
 {
-    const config::ConfigValue* app  = config_root_.Find("app");
-    const config::ConfigValue* mock = app != nullptr ? app->Find("mock_pipeline") : nullptr;
-    const config::ConfigValue* pipeline =
-        app != nullptr ? app->Find("video_pipeline") : nullptr;
+    const config::ConfigValue* app      = config_root_.Find("app");
+    const config::ConfigValue* mock     = app != nullptr ? app->Find("mock_pipeline") : nullptr;
+    const config::ConfigValue* pipeline = app != nullptr ? app->Find("video_pipeline") : nullptr;
 
     // 自动退出时长（演示/自测用；0 = 一直运行直到收到退出信号）
     if (app != nullptr)
@@ -135,7 +133,8 @@ Status Application::RegisterServices()
             return status;
         }
         services_.push_back(std::move(service));
-        service_notes_.push_back("composite 链路（host=MOCK 源/编码/发布；目标板=V4L2/MPP/RGA/ZLM）");
+        service_notes_.push_back(
+            "composite 链路（host=MOCK 源/编码/发布；目标板=V4L2/MPP/RGA/ZLM）");
     }
 
     // MOCK 流水线：仅验证基础设施接线，不代表任何真实视频/推理能力。
@@ -188,10 +187,7 @@ std::vector<Application::ServiceStatus> Application::DescribeServices() const
     return result;
 }
 
-void Application::RequestShutdown()
-{
-    stop_requested_.store(true, std::memory_order_relaxed);
-}
+void Application::RequestShutdown() { stop_requested_.store(true, std::memory_order_relaxed); }
 
 int Application::Run()
 {
@@ -200,9 +196,7 @@ int Application::Run()
     SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 #else
     g_active_application = this;
-    struct sigaction action
-    {
-    };
+    struct sigaction action{};
     action.sa_handler = SignalHandler;
     sigemptyset(&action.sa_mask);
     sigaction(SIGINT, &action, nullptr);
@@ -216,8 +210,8 @@ int Application::Run()
         const Status status = service->Start();
         if (!status)
         {
-            AM_LOG_ERROR() << "service " << service->Name() << " start failed: "
-                           << status.ToString();
+            AM_LOG_ERROR() << "service " << service->Name()
+                           << " start failed: " << status.ToString();
         }
         else
         {
@@ -275,8 +269,7 @@ int Application::Run()
                 const auto stats = pipeline->GetSnapshot();
                 AM_LOG_INFO() << "video_pipeline stats: pairs=" << stats.sync.pairs
                               << " desync_drops=" << stats.sync.desync_drops
-                              << " composed=" << stats.composed
-                              << " encoded=" << stats.encoded
+                              << " composed=" << stats.composed << " encoded=" << stats.encoded
                               << " published_packets=" << stats.published_packets
                               << " published_bytes=" << stats.published_bytes
                               << " encode_errors=" << stats.encode_errors

@@ -8,14 +8,15 @@
 
 #include "animal_monitor/app/service.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 明确标注的 MOCK 流水线：不接触任何真实硬件/SDK。
 // 用途：在 host 上验证基础设施（有界队列、指标、优雅停机）的接线正确性。
 // 禁止把该服务的输出当作真实视频/推理结果。
 class MockPipelineService : public Service
 {
-  public:
+   public:
     // producer_interval：模拟帧间隔；duration：运行时长（0 表示无限，靠 Stop 结束）。
     MockPipelineService(std::chrono::milliseconds producer_interval,
                         std::chrono::milliseconds duration);
@@ -29,14 +30,14 @@ class MockPipelineService : public Service
     // 运行期统计快照（供主线程打印）。
     struct Snapshot
     {
-        std::uint64_t produced = 0;
-        std::uint64_t consumed = 0;
-        std::uint64_t dropped  = 0;
+        std::uint64_t produced   = 0;
+        std::uint64_t consumed   = 0;
+        std::uint64_t dropped    = 0;
         std::uint64_t queue_size = 0;
     };
     Snapshot GetSnapshot() const;
 
-  private:
+   private:
     void ProducerLoop();
     void ConsumerLoop();
 

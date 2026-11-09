@@ -1,6 +1,7 @@
 // 文件名：include/animal_monitor/media/stream_publisher.h
 // 状态：implemented（模板）/ hardware-blocked —— 未经目标板编译与实测（UNVERIFIED）
-// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md 审计结论重写；
+// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md
+// 审计结论重写；
 //       API 形状参考 .ref_audit_RKMediaProject（ZlmPublisher），未逐行拷贝。
 // 说明：ZLMediaKit C API（mk_*）头文件由构建系统提供 include 路径，
 //       本仓库不拷贝 ZLM 头；头缺失仅在本文件参与构建
@@ -18,7 +19,8 @@
 
 #include "animal_monitor/media/video_publisher.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // ZLMediaKit 内嵌发布器：mk_env_init → http/rtsp/(rtc) server → mk_media_create2
 // → mk_track H264 → init_track/init_complete；FeedH264 拆 Annex-B NALU 逐条输入。
@@ -26,7 +28,7 @@ namespace animal_monitor {
 // 线程安全：FeedH264/Close/RtspUrl 内部加锁，可跨线程调用。
 class StreamPublisher : public VideoPublisher
 {
-  public:
+   public:
     StreamPublisher();
     ~StreamPublisher() override;
 
@@ -44,7 +46,7 @@ class StreamPublisher : public VideoPublisher
     // RTSP 拉流地址（含 <设备IP> 占位符，端口为实际监听端口）。
     std::string RtspUrl() const override;
 
-  private:
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

@@ -4,7 +4,8 @@
 
 using animal_monitor::TimestampAligner;
 
-namespace {
+namespace
+{
 
 AM_TEST(aligns_pairs_within_tolerance)
 {
@@ -55,9 +56,9 @@ AM_TEST(reset_clears_pending_samples)
 
 AM_TEST(monotonic_stream_sequence)
 {
-    TimestampAligner aligner(2'000);
+    TimestampAligner   aligner(2'000);
     const std::int64_t kInterval = 33'333;  // 约 30fps
-    int matches = 0;
+    int                matches   = 0;
     for (int i = 0; i < 100; ++i)
     {
         const std::int64_t ts = 1'000'000 + i * kInterval;
@@ -74,7 +75,4 @@ AM_TEST(monotonic_stream_sequence)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

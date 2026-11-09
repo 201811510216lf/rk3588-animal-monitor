@@ -7,9 +7,10 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/logging/logger.h"
 
-namespace {
+namespace
+{
 
-constexpr const char* kVersion   = "0.1.0";
+constexpr const char* kVersion       = "0.1.0";
 constexpr const char* kDefaultConfig = "configs/default.yaml";
 
 void PrintUsage(const char* program)
@@ -81,7 +82,7 @@ int main(int argc, char** argv)
         animal_monitor::Logger::Instance().SetLevel(animal_monitor::LogLevel::kError);
     }
 
-    animal_monitor::Application app(config_path);
+    animal_monitor::Application  app(config_path);
     const animal_monitor::Status status = app.Initialize();
     if (!status)
     {

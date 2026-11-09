@@ -8,14 +8,16 @@
 
 #include <cmath>
 
-namespace animal_monitor::calibration {
+namespace animal_monitor::calibration
+{
 
-namespace {
+namespace
+{
 
 // 工程合理性阈值（非标定值，UNVERIFIED）：防止明显错误的配置进入运行期。
-constexpr float kMinMappingScale  = 1e-6f;  // scale 必须为有限正数
-constexpr float kMaxMappingScale  = 100.0f; // 缩放上界（热图仅 32x24，正常相机映射远小于此）
-constexpr float kMaxMappingOffset = 1e4f;   // 偏移绝对值上界
+constexpr float kMinMappingScale  = 1e-6f;   // scale 必须为有限正数
+constexpr float kMaxMappingScale  = 100.0f;  // 缩放上界（热图仅 32x24，正常相机映射远小于此）
+constexpr float kMaxMappingOffset = 1e4f;    // 偏移绝对值上界
 
 const char* const kConfigKeyScaleX  = "scale_x";
 const char* const kConfigKeyScaleY  = "scale_y";
@@ -136,8 +138,8 @@ Status LoadMappingFromConfig(const config::ConfigValue& node, CameraThermalMappi
     {
         return Status(StatusCode::kConfigurationError, "标定映射配置必须是 map 节点");
     }
-    const char* const keys[4] = {kConfigKeyScaleX, kConfigKeyScaleY, kConfigKeyOffsetX,
-                                 kConfigKeyOffsetY};
+    const char* const keys[4]   = {kConfigKeyScaleX, kConfigKeyScaleY, kConfigKeyOffsetX,
+                                   kConfigKeyOffsetY};
     double            values[4] = {0.0, 0.0, 0.0, 0.0};
     for (int i = 0; i < 4; ++i)
     {
@@ -161,7 +163,7 @@ Status LoadMappingFromConfig(const config::ConfigValue& node, CameraThermalMappi
     mapping.offset_x = static_cast<float>(values[2]);
     mapping.offset_y = static_cast<float>(values[3]);
 
-    std::string err;
+    std::string  err;
     const Status valid = ValidateMapping(mapping, &err);
     if (!valid.Ok())
     {

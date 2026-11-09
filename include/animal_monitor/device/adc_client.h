@@ -17,17 +17,18 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // IIO sysfs ADC 客户端：读取 in_voltageX_raw / in_voltageX_scale。
 class AdcClient
 {
-  public:
+   public:
     // iio_device_name：IIO 设备名（如 "iio:device0"），sysfs 基路径为
     // /sys/bus/iio/devices/<name>，由配置传入。
     explicit AdcClient(std::string iio_device_name);
 
-    AdcClient(const AdcClient&) = delete;
+    AdcClient(const AdcClient&)            = delete;
     AdcClient& operator=(const AdcClient&) = delete;
 
     // 校验 IIO 设备目录存在（stat 检查目录）。
@@ -45,7 +46,7 @@ class AdcClient
 
     bool IsOpen() const { return open_; }
 
-  private:
+   private:
     // 读取 sysfs 属性文件内容（去除尾部空白）；文件不存在返回 kHardwareUnavailable。
     Status ReadAttr(const std::string& attr_name, std::string* out);
 

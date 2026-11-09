@@ -10,7 +10,8 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 计算字节序列的 SHA-256，返回 64 字符小写十六进制。
 // data 为 nullptr 时 size 必须为 0（空数据哈希）。

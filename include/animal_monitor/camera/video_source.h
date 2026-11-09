@@ -6,7 +6,8 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 视频源抽象：V4L2 相机（目标板）、mock 源（host 测试/演示）。
 // 实现约定：
@@ -15,7 +16,7 @@ namespace animal_monitor {
 //  - 帧在内部以有界队列缓冲（容量/策略配置化），不得无限积压。
 class VideoSource
 {
-  public:
+   public:
     virtual ~VideoSource() = default;
 
     // 展示名（状态表使用）。

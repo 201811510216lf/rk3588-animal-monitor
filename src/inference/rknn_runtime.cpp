@@ -11,9 +11,11 @@
 #include <fstream>
 #include <vector>
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
-namespace {
+namespace
+{
 
 // yolov5s 标准锚点（A/B 实测使用，COCO 训练尺寸；UNVERIFIED：板卡实测确认）。
 constexpr std::array<float, 6> kAnchorsStride8  = {10.0f, 13.0f, 16.0f, 30.0f, 33.0f, 23.0f};

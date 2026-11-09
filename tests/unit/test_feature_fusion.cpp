@@ -17,12 +17,10 @@ using animal_monitor::fusion::BehaviorEvent;
 using animal_monitor::fusion::FeatureFusion;
 using animal_monitor::fusion::ThermalSample;
 
-namespace {
-
-bool Near(float a, float b)
+namespace
 {
-    return std::fabs(a - b) <= 1e-4f;
-}
+
+bool Near(float a, float b) { return std::fabs(a - b) <= 1e-4f; }
 
 AM_TEST(aggregates_events_and_thermal_in_window)
 {
@@ -112,7 +110,7 @@ AM_TEST(thermal_sample_associated_with_matching_behavior)
     // [-9000, 1000] 内（1500 > 1000）→ 只关联 sleep。
     const auto stats = fusion.Snapshot(11'000);
     AM_EXPECT_EQ(stats.size(), 2u);
-    AM_EXPECT_EQ(stats[0].behavior, std::string("eat"));   // 字典序
+    AM_EXPECT_EQ(stats[0].behavior, std::string("eat"));  // 字典序
     AM_EXPECT_EQ(stats[1].behavior, std::string("sleep"));
     AM_EXPECT_EQ(stats[0].thermal_count, 0u);
     AM_EXPECT_EQ(stats[1].thermal_count, 1u);
@@ -157,7 +155,4 @@ AM_TEST(future_events_excluded)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

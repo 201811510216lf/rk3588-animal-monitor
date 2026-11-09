@@ -30,24 +30,29 @@
 #include "dma_heap_allocator.h"
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
-constexpr RK_S64 kMppIOTimeoutMs = 500;                 // MPP 内部输入/输出超时
-constexpr std::size_t kOutputBufferCount = 24;          // 输出池上限（mpi_dec_test 惯例）
-constexpr std::size_t kInputBufferCount  = 4;           // 输入包缓冲池
-constexpr std::size_t kMaxInputBufferSize = 8u << 20;   // 单包输入上限（8MB）
-constexpr auto kDrainBeforeFeedTimeout = std::chrono::milliseconds(20);
-constexpr auto kDrainAfterFeedTimeout = std::chrono::milliseconds(3000);
+constexpr RK_S64      kMppIOTimeoutMs         = 500;       // MPP 内部输入/输出超时
+constexpr std::size_t kOutputBufferCount      = 24;        // 输出池上限（mpi_dec_test 惯例）
+constexpr std::size_t kInputBufferCount       = 4;         // 输入包缓冲池
+constexpr std::size_t kMaxInputBufferSize     = 8u << 20;  // 单包输入上限（8MB）
+constexpr auto        kDrainBeforeFeedTimeout = std::chrono::milliseconds(20);
+constexpr auto        kDrainAfterFeedTimeout  = std::chrono::milliseconds(3000);
 
 MppCodingType ToMppCodingType(VideoCodec codec)
 {
     switch (codec)
     {
-        case VideoCodec::kH265:  return MPP_VIDEO_CodingHEVC;
-        case VideoCodec::kH264:  return MPP_VIDEO_CodingAVC;
-        default:                 return MPP_VIDEO_CodingUnused;
+        case VideoCodec::kH265:
+            return MPP_VIDEO_CodingHEVC;
+        case VideoCodec::kH264:
+            return MPP_VIDEO_CodingAVC;
+        default:
+            return MPP_VIDEO_CodingUnused;
     }
 }
 
@@ -56,30 +61,45 @@ const char* MppErrorName(MPP_RET ret)
 {
     switch (ret)
     {
-        case MPP_OK:                 return "MPP_OK";
-        case MPP_NOK:                return "MPP_NOK";
-        case MPP_ERR_UNKNOW:         return "MPP_ERR_UNKNOW";
-        case MPP_ERR_NULL_PTR:       return "MPP_ERR_NULL_PTR";
-        case MPP_ERR_MALLOC:         return "MPP_ERR_MALLOC";
-        case MPP_ERR_OPEN_FILE:      return "MPP_ERR_OPEN_FILE";
-        case MPP_ERR_VALUE:          return "MPP_ERR_VALUE";
-        case MPP_ERR_TIMEOUT:        return "MPP_ERR_TIMEOUT";
-        case MPP_ERR_INIT:           return "MPP_ERR_INIT";
-        case MPP_ERR_STREAM:         return "MPP_ERR_STREAM";
-        case MPP_ERR_NOMEM:          return "MPP_ERR_NOMEM";
-        case MPP_ERR_PROTOL:         return "MPP_ERR_PROTOL";
-        case MPP_ERR_VPUHW:          return "MPP_ERR_VPUHW";
-        case MPP_EOS_STREAM_REACHED: return "MPP_EOS_STREAM_REACHED";
-        case MPP_ERR_BUFFER_FULL:    return "MPP_ERR_BUFFER_FULL";
-        default:                     return "MPP_ERR_?";
+        case MPP_OK:
+            return "MPP_OK";
+        case MPP_NOK:
+            return "MPP_NOK";
+        case MPP_ERR_UNKNOW:
+            return "MPP_ERR_UNKNOW";
+        case MPP_ERR_NULL_PTR:
+            return "MPP_ERR_NULL_PTR";
+        case MPP_ERR_MALLOC:
+            return "MPP_ERR_MALLOC";
+        case MPP_ERR_OPEN_FILE:
+            return "MPP_ERR_OPEN_FILE";
+        case MPP_ERR_VALUE:
+            return "MPP_ERR_VALUE";
+        case MPP_ERR_TIMEOUT:
+            return "MPP_ERR_TIMEOUT";
+        case MPP_ERR_INIT:
+            return "MPP_ERR_INIT";
+        case MPP_ERR_STREAM:
+            return "MPP_ERR_STREAM";
+        case MPP_ERR_NOMEM:
+            return "MPP_ERR_NOMEM";
+        case MPP_ERR_PROTOL:
+            return "MPP_ERR_PROTOL";
+        case MPP_ERR_VPUHW:
+            return "MPP_ERR_VPUHW";
+        case MPP_EOS_STREAM_REACHED:
+            return "MPP_EOS_STREAM_REACHED";
+        case MPP_ERR_BUFFER_FULL:
+            return "MPP_ERR_BUFFER_FULL";
+        default:
+            return "MPP_ERR_?";
     }
 }
 
 Status MakeMppStatus(const char* operation, MPP_RET ret)
 {
-    return Status(StatusCode::kInternal,
-                  std::string("[MPP-DEC] ") + operation + " 失败: " + MppErrorName(ret) +
-                      " (" + std::to_string(ret) + ")");
+    return Status(StatusCode::kInternal, std::string("[MPP-DEC] ") + operation + " 失败: " +
+                                             MppErrorName(ret) + " (" + std::to_string(ret) + ")");
 }
 
 }  // namespace
@@ -89,7 +109,7 @@ Status MakeMppStatus(const char* operation, MPP_RET ret)
 // （设计依据：docs/architecture/buffer_lifecycle.md）。
 class MppFrameOwner : public FdBufferOwner
 {
-  public:
+   public:
     explicit MppFrameOwner(MppFrame frame) : frame_(frame), buffer_(mpp_frame_get_buffer(frame))
     {
         if (buffer_ != nullptr)
@@ -121,14 +141,14 @@ class MppFrameOwner : public FdBufferOwner
         return buffer_ != nullptr ? mpp_buffer_get_size(buffer_) : 0;
     }
 
-  private:
+   private:
     MppFrame  frame_  = nullptr;
     MppBuffer buffer_ = nullptr;
 };
 
 class MppDecoder::Impl
 {
-  public:
+   public:
     ~Impl() { ReleaseAll(); }
 
     Status Initialize(const MppDecoderConfig& config)
@@ -141,8 +161,7 @@ class MppDecoder::Impl
         const MppCodingType coding = ToMppCodingType(config.codec);
         if (coding == MPP_VIDEO_CodingUnused)
         {
-            return Status(StatusCode::kInvalidArgument,
-                          "[MPP-DEC] codec 仅支持 kH264 / kH265");
+            return Status(StatusCode::kInvalidArgument, "[MPP-DEC] codec 仅支持 kH264 / kH265");
         }
 
         MPP_RET ret = mpp_create(&ctx_, &api_);
@@ -159,7 +178,7 @@ class MppDecoder::Impl
 
         // split_parse=1：送入一包不完整数据也能尽快吐出一帧（参考 A/B 框架）。
         MppDecCfg dec_cfg = nullptr;
-        ret = mpp_dec_cfg_init(&dec_cfg);
+        ret               = mpp_dec_cfg_init(&dec_cfg);
         if (ret == MPP_OK)
         {
             ret = api_->control(ctx_, MPP_DEC_GET_CFG, dec_cfg);
@@ -184,7 +203,7 @@ class MppDecoder::Impl
 
         // 输出强制 NV12，便于下游（RGA/编码器）统一处理。
         RK_U32 output_format = MPP_FMT_YUV420SP;
-        ret = api_->control(ctx_, MPP_DEC_SET_OUTPUT_FORMAT, &output_format);
+        ret                  = api_->control(ctx_, MPP_DEC_SET_OUTPUT_FORMAT, &output_format);
         if (ret != MPP_OK)
         {
             ReleaseAll();
@@ -192,7 +211,7 @@ class MppDecoder::Impl
         }
 
         RK_S64 timeout_ms = kMppIOTimeoutMs;
-        ret = api_->control(ctx_, MPP_SET_INPUT_TIMEOUT, &timeout_ms);
+        ret               = api_->control(ctx_, MPP_SET_INPUT_TIMEOUT, &timeout_ms);
         if (ret == MPP_OK)
         {
             ret = api_->control(ctx_, MPP_SET_OUTPUT_TIMEOUT, &timeout_ms);
@@ -277,7 +296,7 @@ class MppDecoder::Impl
         ver_stride_       = 0;
     }
 
-  private:
+   private:
     Status FeedPacket(const std::uint8_t* data, std::size_t size, std::int64_t pts_us)
     {
         MppBuffer buffer = nullptr;
@@ -296,7 +315,7 @@ class MppDecoder::Impl
         }
 
         MppPacket packet = nullptr;
-        ret = mpp_packet_init_with_buffer(&packet, buffer);
+        ret              = mpp_packet_init_with_buffer(&packet, buffer);
         if (ret != MPP_OK || packet == nullptr)
         {
             mpp_buffer_put(buffer);
@@ -431,8 +450,8 @@ class MppDecoder::Impl
             AM_LOG_WARNING() << "[MPP-DEC] 输出 hor_stride=" << hor_stride << " 未 16 对齐";
         }
         info_change_done_ = true;
-        AM_LOG_INFO() << "[MPP-DEC] info-change: " << width_ << "x" << height_
-                      << " stride(" << hor_stride_ << "," << ver_stride_ << ")";
+        AM_LOG_INFO() << "[MPP-DEC] info-change: " << width_ << "x" << height_ << " stride("
+                      << hor_stride_ << "," << ver_stride_ << ")";
         return Status::MakeOk();
     }
 
@@ -467,7 +486,8 @@ class MppDecoder::Impl
         FrameMeta meta;
         meta.width  = width;
         meta.height = height;
-        meta.stride = hor_stride;  // stride 必须写入 meta 供下游校验（审计缺陷：stride 未对齐/缺失）
+        meta.stride =
+            hor_stride;  // stride 必须写入 meta 供下游校验（审计缺陷：stride 未对齐/缺失）
         meta.format = PixelFormat::kNv12;
 
         const std::int64_t frame_pts = mpp_frame_get_pts(frame);
@@ -485,12 +505,12 @@ class MppDecoder::Impl
             }
         }
 
-        auto frame_ptr = std::make_shared<VideoFrame>(meta);
+        auto frame_ptr   = std::make_shared<VideoFrame>(meta);
         frame_ptr->owner = std::make_shared<MppFrameOwner>(frame);
 
-        const std::size_t y_size  = static_cast<std::size_t>(hor_stride) * ver_stride;
-        const std::uint8_t* base  = static_cast<std::uint8_t*>(ptr);
-        PlaneView y_plane;
+        const std::size_t   y_size = static_cast<std::size_t>(hor_stride) * ver_stride;
+        const std::uint8_t* base   = static_cast<std::uint8_t*>(ptr);
+        PlaneView           y_plane;
         y_plane.data       = base;
         y_plane.size       = y_size + y_size / 2u;
         y_plane.row_stride = hor_stride;
@@ -498,7 +518,7 @@ class MppDecoder::Impl
         uv_plane.data       = base + y_size;
         uv_plane.size       = y_size / 2u;
         uv_plane.row_stride = hor_stride;
-        frame_ptr->planes = {y_plane, uv_plane};
+        frame_ptr->planes   = {y_plane, uv_plane};
 
         *out = std::move(frame_ptr);
         return Status::MakeOk();
@@ -531,28 +551,23 @@ class MppDecoder::Impl
         initialized_ = false;
     }
 
-    MppCtx         ctx_             = nullptr;
-    MppApi*        api_             = nullptr;
-    MppBufferGroup output_group_    = nullptr;
-    MppBufferGroup input_group_     = nullptr;
-    bool           initialized_     = false;
+    MppCtx         ctx_              = nullptr;
+    MppApi*        api_              = nullptr;
+    MppBufferGroup output_group_     = nullptr;
+    MppBufferGroup input_group_      = nullptr;
+    bool           initialized_      = false;
     bool           info_change_done_ = false;
-    std::uint32_t  width_           = 0;
-    std::uint32_t  height_          = 0;
-    std::uint32_t  hor_stride_      = 0;
-    std::uint32_t  ver_stride_      = 0;
+    std::uint32_t  width_            = 0;
+    std::uint32_t  height_           = 0;
+    std::uint32_t  hor_stride_       = 0;
+    std::uint32_t  ver_stride_       = 0;
 };
 
-MppDecoder::MppDecoder() : impl_(std::make_unique<Impl>())
-{
-}
+MppDecoder::MppDecoder() : impl_(std::make_unique<Impl>()) {}
 
 MppDecoder::~MppDecoder() = default;
 
-Status MppDecoder::Initialize(const MppDecoderConfig& config)
-{
-    return impl_->Initialize(config);
-}
+Status MppDecoder::Initialize(const MppDecoderConfig& config) { return impl_->Initialize(config); }
 
 Status MppDecoder::Decode(const std::uint8_t* data, std::size_t size, std::int64_t pts_us,
                           VideoFramePtr* out)
@@ -560,9 +575,6 @@ Status MppDecoder::Decode(const std::uint8_t* data, std::size_t size, std::int64
     return impl_->Decode(data, size, pts_us, out);
 }
 
-void MppDecoder::Reset()
-{
-    impl_->Reset();
-}
+void MppDecoder::Reset() { impl_->Reset(); }
 
 }  // namespace animal_monitor

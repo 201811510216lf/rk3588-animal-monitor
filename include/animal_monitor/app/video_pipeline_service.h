@@ -11,7 +11,8 @@
 #include "animal_monitor/media/video_encoder.h"
 #include "animal_monitor/media/video_publisher.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 视频流水线服务：双路 VideoSource → FrameSynchronizer → FrameCompositor →
 // VideoEncoder → VideoPublisher（composite 默认模式）。
@@ -19,9 +20,9 @@ namespace animal_monitor {
 // host 上以 MOCK 组件运行；目标板（deps ON）接入 V4L2/MPP/RGA/ZLM 真实实现。
 class VideoPipelineService : public Service
 {
-  public:
+   public:
     // 从配置树构建（cameras/composition/encoder/network 段）。
-    static Status BuildFromConfig(const config::ConfigValue& root,
+    static Status BuildFromConfig(const config::ConfigValue&             root,
                                   std::unique_ptr<VideoPipelineService>* out);
 
     ~VideoPipelineService() override;
@@ -33,8 +34,8 @@ class VideoPipelineService : public Service
     struct Snapshot
     {
         FrameSynchronizer::Metrics sync;
-        std::uint64_t              composed = 0;
-        std::uint64_t              encoded  = 0;
+        std::uint64_t              composed          = 0;
+        std::uint64_t              encoded           = 0;
         std::uint64_t              published_packets = 0;
         std::uint64_t              published_bytes   = 0;
         std::uint64_t              encode_errors     = 0;
@@ -42,7 +43,7 @@ class VideoPipelineService : public Service
     };
     Snapshot GetSnapshot() const;
 
-  private:
+   private:
     VideoPipelineService() = default;
 
     void CaptureLoop(int camera_id);

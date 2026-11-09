@@ -22,9 +22,11 @@
 
 #include "mlx90640/uapi/mlx90640.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr std::uint32_t kDefaultCameraId = 0;  // 板卡配置项接入前固定为 0（UNVERIFIED）
 
@@ -43,21 +45,14 @@ Status StatusFromErrno(int error, const char* what)
     {
         return Status(StatusCode::kHardwareUnavailable, std::string(what) + ": 设备已移除");
     }
-    return Status(StatusCode::kUnavailable,
-                  std::string(what) + ": " + std::strerror(error));
+    return Status(StatusCode::kUnavailable, std::string(what) + ": " + std::strerror(error));
 }
 
 }  // namespace
 
-Mlx90640Client::Mlx90640Client(std::string device_path)
-    : device_path_(std::move(device_path))
-{
-}
+Mlx90640Client::Mlx90640Client(std::string device_path) : device_path_(std::move(device_path)) {}
 
-Mlx90640Client::~Mlx90640Client()
-{
-    Close();
-}
+Mlx90640Client::~Mlx90640Client() { Close(); }
 
 Status Mlx90640Client::Open()
 {
@@ -85,9 +80,9 @@ Status Mlx90640Client::Open()
     if (abi != MLX90640_ABI_VERSION)
     {
         Close();
-        return Status(StatusCode::kUnavailable,
-                      "ABI 版本不匹配: 驱动 " + std::to_string(abi) +
-                          " 客户端 " + std::to_string(MLX90640_ABI_VERSION));
+        return Status(StatusCode::kUnavailable, "ABI 版本不匹配: 驱动 " + std::to_string(abi) +
+                                                    " 客户端 " +
+                                                    std::to_string(MLX90640_ABI_VERSION));
     }
 
     // 标定参数拷贝 → 用户态解析（内核不做温度算法）。
@@ -106,7 +101,7 @@ Status Mlx90640Client::Open()
     }
 
     const Status parse = ParseEeprom(params.eeprom, &eeprom_);
-    eeprom_ok_ = parse.Ok();
+    eeprom_ok_         = parse.Ok();
     // 解析失败不关闭设备：原始帧仍可读，像素以 NaN 标记（见 ReadFrame）。
 
     return Status::MakeOk();
@@ -134,9 +129,9 @@ Status Mlx90640Client::ReadFrame(ThermalFrame* frame, int timeout_ms)
     }
 
     struct pollfd pfd;
-    pfd.fd      = fd_;
-    pfd.events  = POLLIN;
-    pfd.revents = 0;
+    pfd.fd             = fd_;
+    pfd.events         = POLLIN;
+    pfd.revents        = 0;
     const int poll_ret = ::poll(&pfd, 1, timeout_ms);
     if (poll_ret == 0)
     {
@@ -168,12 +163,10 @@ Status Mlx90640Client::ReadFrame(ThermalFrame* frame, int timeout_ms)
     }
 
     // 组装用户态 ThermalFrame（内核已按交错模式合并 raw）。
-    frame->id.sequence  = kframe.frame_id;
-    frame->id.camera_id = kDefaultCameraId;
+    frame->id.sequence             = kframe.frame_id;
+    frame->id.camera_id            = kDefaultCameraId;
     frame->timestamps.monotonic_ns = static_cast<std::int64_t>(kframe.timestamp_ns);
-    struct timespec wall_ts
-    {
-    };
+    struct timespec wall_ts{};
     ::clock_gettime(CLOCK_REALTIME, &wall_ts);
     frame->timestamps.wall_clock_ns = static_cast<std::int64_t>(wall_ts.tv_sec) * 1000000000LL +
                                       static_cast<std::int64_t>(wall_ts.tv_nsec);
@@ -186,18 +179,18 @@ Status Mlx90640Client::ReadFrame(ThermalFrame* frame, int timeout_ms)
     }
 
     // 刷新帧内 RAM 值（温度换算所需）。
-    eeprom_.ta_raw       = kframe.ta_raw;
-    eeprom_.vdd_raw      = kframe.vdd_raw;
-    eeprom_.gain_ram     = kframe.gain_raw;
-    eeprom_.cp_pixel[0]  = kframe.cp_pixel[0];
-    eeprom_.cp_pixel[1]  = kframe.cp_pixel[1];
-    eeprom_.pix_os_cp    = kframe.ptat_art_raw;
+    eeprom_.ta_raw         = kframe.ta_raw;
+    eeprom_.vdd_raw        = kframe.vdd_raw;
+    eeprom_.gain_ram       = kframe.gain_raw;
+    eeprom_.cp_pixel[0]    = kframe.cp_pixel[0];
+    eeprom_.cp_pixel[1]    = kframe.cp_pixel[1];
+    eeprom_.pix_os_cp      = kframe.ptat_art_raw;
     eeprom_.resolution_ram = eeprom_.resolution_ee;  // 初稿：帧内分辨率快照与 EEPROM 一致
 
     const float ta  = CalcTa(eeprom_, kframe.ta_raw);
     const float vdd = CalcVdd(eeprom_, kframe.vdd_raw);
-    frame->ta_c  = ta;
-    frame->vdd_v = vdd;
+    frame->ta_c     = ta;
+    frame->vdd_v    = vdd;
     if (std::isnan(ta) || std::isnan(vdd))
     {
         frame->status_bits |= thermal_status_bits::kOutOfRange;

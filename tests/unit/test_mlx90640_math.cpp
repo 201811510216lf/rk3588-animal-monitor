@@ -37,7 +37,8 @@ using animal_monitor::TgcCompensation;
 using animal_monitor::ThermalFrame;
 using animal_monitor::ValidPixelRatio;
 
-namespace {
+namespace
+{
 
 constexpr int kWordCount = kMlx90640EepromSizeBytes / 2;
 
@@ -49,37 +50,37 @@ bool Approx(float actual, float expected, float eps = 1e-3f)
 // 合成 EEPROM：全局标定取值见 mlx90640_math.cpp 官方库 Extract* 参数语义。
 struct SyntheticEeprom
 {
-    std::array<std::uint16_t, kWordCount>                words{};
-    std::array<std::uint8_t, kMlx90640EepromSizeBytes>   bytes{};
+    std::array<std::uint16_t, kWordCount>              words{};
+    std::array<std::uint8_t, kMlx90640EepromSizeBytes> bytes{};
 
     void SetWord(int index, std::uint16_t value)
     {
-        words[static_cast<std::size_t>(index)] = value;
-        bytes[static_cast<std::size_t>(index * 2)] = static_cast<std::uint8_t>(value >> 8);
+        words[static_cast<std::size_t>(index)]         = value;
+        bytes[static_cast<std::size_t>(index * 2)]     = static_cast<std::uint8_t>(value >> 8);
         bytes[static_cast<std::size_t>(index * 2 + 1)] = static_cast<std::uint8_t>(value & 0xFF);
     }
 
     explicit SyntheticEeprom()
     {
-        SetWord(0, 0x0210);  // EEPROM 版本
-        SetWord(5, 0x10);    // 标定常数
-        SetWord(16, 0x0213); // CTRL1：occRowScale=2、occColumnScale=1、occRemScale=3、alphaPTAT=0
-        SetWord(17, 0);      // offsetRef
-        SetWord(32, 0x4000); // alphaScale 高 4 位 = 4（+30），行列/余数尺度 = 0
-        SetWord(33, 1024);   // alphaRef
-        SetWord(48, 1024);   // gainEE
-        SetWord(49, 32768);  // vPTAT25
+        SetWord(0, 0x0210);   // EEPROM 版本
+        SetWord(5, 0x10);     // 标定常数
+        SetWord(16, 0x0213);  // CTRL1：occRowScale=2、occColumnScale=1、occRemScale=3、alphaPTAT=0
+        SetWord(17, 0);       // offsetRef
+        SetWord(32, 0x4000);  // alphaScale 高 4 位 = 4（+30），行列/余数尺度 = 0
+        SetWord(33, 1024);    // alphaRef
+        SetWord(48, 1024);    // gainEE
+        SetWord(49, 32768);   // vPTAT25
         SetWord(50, static_cast<std::uint16_t>((16 << 10) | 32));  // Kt2=16/4096、Kt1=4.0
         SetWord(51, static_cast<std::uint16_t>((4 << 8) | 160));   // kVdd=128、vdd25=-11264
-        SetWord(52, 0x1111); // KvT 四象限 = 1
-        SetWord(56, 0x3111); // res=3、kvScale=1、ktaScale1 高 4 位=1（+8）、ktaScale2=1
-        SetWord(57, 0x0080); // cpAlpha[0] 原始 128（÷2^31）
-        SetWord(58, 0x0040); // cpOffset[0] 原始 64
-        SetWord(59, 0x0101); // cpKta=1、cpKv=1
-        SetWord(60, 0x0810); // KsTa=8（÷8192）、tgc=16（÷32=0.5）
-        SetWord(61, 0x0810); // ksTo[0]=16、ksTo[1]=8（÷2^(1+8)=512）
-        SetWord(62, 0x0204); // ksTo[2]=4、ksTo[3]=2
-        SetWord(63, 0x1AA1); // step=10、ct2=100、ct3=200、KsToScale=2^9
+        SetWord(52, 0x1111);                                       // KvT 四象限 = 1
+        SetWord(56, 0x3111);  // res=3、kvScale=1、ktaScale1 高 4 位=1（+8）、ktaScale2=1
+        SetWord(57, 0x0080);  // cpAlpha[0] 原始 128（÷2^31）
+        SetWord(58, 0x0040);  // cpOffset[0] 原始 64
+        SetWord(59, 0x0101);  // cpKta=1、cpKv=1
+        SetWord(60, 0x0810);  // KsTa=8（÷8192）、tgc=16（÷32=0.5）
+        SetWord(61, 0x0810);  // ksTo[0]=16、ksTo[1]=8（÷2^(1+8)=512）
+        SetWord(62, 0x0204);  // ksTo[2]=4、ksTo[3]=2
+        SetWord(63, 0x1AA1);  // step=10、ct2=100、ct3=200、KsToScale=2^9
         for (int p = 0; p < kMlx90640PixelCount; ++p)
         {
             SetWord(64 + p, 0x0842);  // offset=2（×2^3=16）、alpha=4、kta=1
@@ -95,9 +96,9 @@ struct SyntheticEeprom
 //   修正项 (Ta-25)/(Vdd-3.3) 归零，便于精确断言。
 Mlx90640EepromData MakeFrameEeprom()
 {
-    SyntheticEeprom      synth;
-    Mlx90640EepromData   data;
-    const Status         status = ParseEeprom(synth.bytes.data(), &data);
+    SyntheticEeprom    synth;
+    Mlx90640EepromData data;
+    const Status       status = ParseEeprom(synth.bytes.data(), &data);
     if (!status.Ok())
     {
         throw std::runtime_error("合成 EEPROM 解析失败: " + status.ToString());
@@ -105,10 +106,10 @@ Mlx90640EepromData MakeFrameEeprom()
     data.ta_raw         = 1000;
     data.vdd_raw        = 54272;  // 0xD400
     data.pix_os_cp      = 0;
-    data.gain_ram       = 512;    // gain = gainEE/gainRAM = 2
+    data.gain_ram       = 512;  // gain = gainEE/gainRAM = 2
     data.cp_pixel[0]    = 100;
     data.cp_pixel[1]    = 200;
-    data.resolution_ram = 3;      // 与 resolution_ee 一致 → 分辨率修正 = 1
+    data.resolution_ram = 3;  // 与 resolution_ee 一致 → 分辨率修正 = 1
     return data;
 }
 
@@ -177,8 +178,8 @@ AM_TEST(parse_rejects_alpha_out_of_range)
     SyntheticEeprom    synth;
     Mlx90640EepromData data;
 
-    synth.SetWord(33, 0);      // alphaRef = 0
-    synth.SetWord(60, 0x0800); // tgc = 0
+    synth.SetWord(33, 0);       // alphaRef = 0
+    synth.SetWord(60, 0x0800);  // tgc = 0
     for (int p = 0; p < kMlx90640PixelCount; ++p)
     {
         synth.SetWord(64 + p, 0x0002);  // alpha 位 = 0、offset 位 = 0、kta = 1（非坏像素）
@@ -280,7 +281,7 @@ AM_TEST(calc_vdd_known_value)
 AM_TEST(calc_vdd_zero_sensitivity_returns_nan)
 {
     Mlx90640EepromData data = MakeFrameEeprom();
-    data.vdd_pixel = 0.0f;
+    data.vdd_pixel          = 0.0f;
     AM_EXPECT(std::isnan(CalcVdd(data, data.vdd_raw)));
 }
 
@@ -309,9 +310,9 @@ AM_TEST(calc_to_sanity_and_monotonicity)
 
 AM_TEST(calc_to_emissivity_ordering)
 {
-    Mlx90640EepromData data = MakeFrameEeprom();
+    Mlx90640EepromData data       = MakeFrameEeprom();
     const float        to_default = CalcTo(data, 0, 1000.0f, 25.0f);  // 默认发射率 0.95
-    data.emissivity = 1.0f;  // 发射率越高 → 有效信号越小 → 温度越低
+    data.emissivity               = 1.0f;  // 发射率越高 → 有效信号越小 → 温度越低
     AM_EXPECT(CalcTo(data, 0, 1000.0f, 25.0f) < to_default);
 }
 
@@ -360,7 +361,4 @@ AM_TEST(thermal_frame_all_invalid)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

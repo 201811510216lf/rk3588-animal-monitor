@@ -11,11 +11,12 @@
 
 #include "animal_monitor/inference/i_inference_model.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 class MockInferenceModel : public IInferenceModel
 {
-  public:
+   public:
     MockInferenceModel() = default;
     explicit MockInferenceModel(std::string model_id) : name_(std::move(model_id)) {}
 
@@ -30,7 +31,7 @@ class MockInferenceModel : public IInferenceModel
 
     ModelManifest Manifest() const override;
 
-  private:
+   private:
     mutable std::mutex mutex_;
     std::string        name_ = "mock_detector";
     ModelManifest      manifest_;

@@ -16,12 +16,10 @@ using animal_monitor::fusion::AnomalyConfig;
 using animal_monitor::fusion::AnomalyResult;
 using animal_monitor::fusion::Evaluate;
 
-namespace {
-
-bool Near(float a, float b)
+namespace
 {
-    return std::fabs(a - b) <= 1e-4f;
-}
+
+bool Near(float a, float b) { return std::fabs(a - b) <= 1e-4f; }
 
 AM_TEST(zscore_exceeding_threshold_is_anomaly)
 {
@@ -61,8 +59,8 @@ AM_TEST(baseline_too_small_not_judged)
 AM_TEST(absolute_min_hit_takes_precedence)
 {
     AnomalyConfig config;
-    config.abs_min = 35.0f;
-    config.abs_max = 42.0f;
+    config.abs_min             = 35.0f;
+    config.abs_max             = 42.0f;
     const AnomalyResult result = Evaluate(config, 30.0f, 20, 38.0f, 0.5f);
     AM_EXPECT(result.is_anomaly);
     // z=(30-38)/0.5=-16 同样超阈值，但绝对阈值优先
@@ -73,7 +71,7 @@ AM_TEST(absolute_min_hit_takes_precedence)
 AM_TEST(absolute_max_hit)
 {
     AnomalyConfig config;
-    config.abs_max = 42.0f;
+    config.abs_max             = 42.0f;
     const AnomalyResult result = Evaluate(config, 45.0f, 20, 38.0f, 0.5f);
     AM_EXPECT(result.is_anomaly);
     AM_EXPECT(result.reason == AnomalyResult::Reason::kAbsolute);
@@ -108,7 +106,4 @@ AM_TEST(nonfinite_value_is_absolute_anomaly)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

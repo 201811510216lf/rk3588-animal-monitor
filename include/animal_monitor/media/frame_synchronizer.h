@@ -8,27 +8,28 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 双路帧同步器：两路各持有有界队列（满则丢最旧），按时间戳最近邻 + 容差配对。
 // 超出容差时丢弃较旧样本（记录 desync 指标）并等待另一路新样本。
 // 时间戳语义见 docs/architecture/thread_model.md（单调时钟 ns）。
 class FrameSynchronizer
 {
-  public:
+   public:
     struct Config
     {
-        std::int64_t tolerance_ns = 40'000'000;  // 40ms
+        std::int64_t tolerance_ns   = 40'000'000;  // 40ms
         std::size_t  queue_capacity = 8;
     };
 
     struct Metrics
     {
-        std::uint64_t pushes[2]  = {0, 0};
-        std::uint64_t drops[2]   = {0, 0};  // 队列满丢弃
-        std::uint64_t pairs      = 0;
-        std::uint64_t desync_drops = 0;     // 超容差丢弃旧帧
-        std::uint64_t timeouts   = 0;
+        std::uint64_t pushes[2]    = {0, 0};
+        std::uint64_t drops[2]     = {0, 0};  // 队列满丢弃
+        std::uint64_t pairs        = 0;
+        std::uint64_t desync_drops = 0;  // 超容差丢弃旧帧
+        std::uint64_t timeouts     = 0;
     };
 
     explicit FrameSynchronizer(Config config);
@@ -47,15 +48,15 @@ class FrameSynchronizer
 
     Metrics GetMetrics() const;
 
-  private:
+   private:
     Status PopWithHold(BoundedQueue<VideoFramePtr>& queue, VideoFramePtr* hold,
                        std::chrono::milliseconds timeout);
 
-    Config                       config_;
-    BoundedQueue<VideoFramePtr>  queue_[2];
-    VideoFramePtr                hold_[2];
-    mutable std::mutex           metrics_mutex_;
-    Metrics                      metrics_;
+    Config                      config_;
+    BoundedQueue<VideoFramePtr> queue_[2];
+    VideoFramePtr               hold_[2];
+    mutable std::mutex          metrics_mutex_;
+    Metrics                     metrics_;
 };
 
 }  // namespace animal_monitor

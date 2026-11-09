@@ -1,6 +1,7 @@
 #include "animal_monitor/inference/inference_scheduler.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 InferenceScheduler::InferenceScheduler(ScheduleStrategy              strategy,
                                        std::vector<IInferenceModel*> models, Options options)

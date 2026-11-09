@@ -18,7 +18,8 @@ using animal_monitor::inference::NmsPerClass;
 using animal_monitor::inference::PostprocessYolov5Quantized;
 using animal_monitor::inference::Yolov5HeadSpec;
 
-namespace {
+namespace
+{
 
 constexpr float kAnchorStride8[6]  = {10.0f, 13.0f, 16.0f, 30.0f, 33.0f, 23.0f};
 constexpr float kAnchorStride16[6] = {30.0f, 61.0f, 62.0f, 45.0f, 59.0f, 119.0f};

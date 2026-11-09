@@ -21,9 +21,11 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr std::int64_t kSecondsPerDay = 86400;
 
@@ -52,7 +54,7 @@ std::int64_t DaysFromCivil(std::int64_t year, unsigned int month, unsigned int d
     const std::int64_t era = (year >= 0 ? year : year - 399) / 400;
     const unsigned int yoe = static_cast<unsigned int>(year - era * 400);  // [0, 399]
     // 注意 month 偏移项用有符号运算（12 月对应 -3，1/2 月对应 +9）。
-    const int month_offset = month > 2 ? -3 : 9;
+    const int          month_offset = month > 2 ? -3 : 9;
     const unsigned int doy =
         (153u * (static_cast<int>(month) + month_offset) + 2) / 5 + day - 1;  // [0, 365]
     const unsigned int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;           // [0, 146096]
@@ -61,14 +63,9 @@ std::int64_t DaysFromCivil(std::int64_t year, unsigned int month, unsigned int d
 
 }  // namespace
 
-RtcClient::RtcClient(std::string device_path) : device_path_(std::move(device_path))
-{
-}
+RtcClient::RtcClient(std::string device_path) : device_path_(std::move(device_path)) {}
 
-RtcClient::~RtcClient()
-{
-    Close();
-}
+RtcClient::~RtcClient() { Close(); }
 
 Status RtcClient::Open()
 {
@@ -102,9 +99,7 @@ Status RtcClient::ReadDateTime(RtcDateTime* out)
         return Status(StatusCode::kUnavailable, "RTC 未打开");
     }
 
-    struct rtc_time time
-    {
-    };
+    struct rtc_time time{};
     if (::ioctl(fd_, RTC_RD_TIME, &time) < 0)
     {
         return StatusFromErrno(errno, "ioctl RTC_RD_TIME 失败");
@@ -137,8 +132,7 @@ Status RtcClient::ReadUnixSeconds(std::int64_t* out)
     const std::int64_t days =
         DaysFromCivil(date_time.year, static_cast<unsigned int>(date_time.month),
                       static_cast<unsigned int>(date_time.day));
-    *out = days * kSecondsPerDay +
-           static_cast<std::int64_t>(date_time.hour) * 3600 +
+    *out = days * kSecondsPerDay + static_cast<std::int64_t>(date_time.hour) * 3600 +
            static_cast<std::int64_t>(date_time.minute) * 60 + date_time.second;
     return Status::MakeOk();
 }

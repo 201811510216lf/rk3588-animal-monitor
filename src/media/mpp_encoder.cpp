@@ -32,26 +32,28 @@
 
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
-
-namespace {
-
-constexpr RK_S64 kMppIOTimeoutMs = 200;    // encode_get_packet 内部单次等待上限
-constexpr std::size_t kInputBufferCount = 4;      // 常驻输入缓冲池（缓冲复用）
-constexpr std::size_t kHeaderBufferCount = 1;     // SPS/PPS 头缓冲
-
-std::uint32_t Align16(std::uint32_t value)
+namespace animal_monitor
 {
-    return (value + 15u) / 16u * 16u;
-}
+
+namespace
+{
+
+constexpr RK_S64      kMppIOTimeoutMs    = 200;  // encode_get_packet 内部单次等待上限
+constexpr std::size_t kInputBufferCount  = 4;    // 常驻输入缓冲池（缓冲复用）
+constexpr std::size_t kHeaderBufferCount = 1;    // SPS/PPS 头缓冲
+
+std::uint32_t Align16(std::uint32_t value) { return (value + 15u) / 16u * 16u; }
 
 MppCodingType ToMppCodingType(VideoCodec codec)
 {
     switch (codec)
     {
-        case VideoCodec::kH265:  return MPP_VIDEO_CodingHEVC;
-        case VideoCodec::kH264:  return MPP_VIDEO_CodingAVC;
-        default:                 return MPP_VIDEO_CodingUnused;
+        case VideoCodec::kH265:
+            return MPP_VIDEO_CodingHEVC;
+        case VideoCodec::kH264:
+            return MPP_VIDEO_CodingAVC;
+        default:
+            return MPP_VIDEO_CodingUnused;
     }
 }
 
@@ -59,27 +61,32 @@ const char* MppErrorName(MPP_RET ret)
 {
     switch (ret)
     {
-        case MPP_OK:           return "MPP_OK";
-        case MPP_NOK:          return "MPP_NOK";
-        case MPP_ERR_TIMEOUT:  return "MPP_ERR_TIMEOUT";
-        case MPP_ERR_NOMEM:    return "MPP_ERR_NOMEM";
-        case MPP_ERR_VALUE:    return "MPP_ERR_VALUE";
-        default:               return "MPP_ERR_?";
+        case MPP_OK:
+            return "MPP_OK";
+        case MPP_NOK:
+            return "MPP_NOK";
+        case MPP_ERR_TIMEOUT:
+            return "MPP_ERR_TIMEOUT";
+        case MPP_ERR_NOMEM:
+            return "MPP_ERR_NOMEM";
+        case MPP_ERR_VALUE:
+            return "MPP_ERR_VALUE";
+        default:
+            return "MPP_ERR_?";
     }
 }
 
 Status MakeMppStatus(const char* operation, MPP_RET ret)
 {
-    return Status(StatusCode::kInternal,
-                  std::string("[MPP-ENC] ") + operation + " 失败: " + MppErrorName(ret) +
-                      " (" + std::to_string(ret) + ")");
+    return Status(StatusCode::kInternal, std::string("[MPP-ENC] ") + operation + " 失败: " +
+                                             MppErrorName(ret) + " (" + std::to_string(ret) + ")");
 }
 
 }  // namespace
 
 class MppEncoder::Impl
 {
-  public:
+   public:
     ~Impl() { Close(); }
 
     Status Initialize(const EncoderConfig& config)
@@ -94,15 +101,15 @@ class MppEncoder::Impl
             return validate;
         }
 
-        coding_       = ToMppCodingType(config.codec);
-        width_        = config.width;
-        height_       = config.height;
-        hor_stride_   = (config.hor_stride > 0) ? Align16(config.hor_stride) : Align16(width_);
-        ver_stride_   = (config.ver_stride > 0) ? Align16(config.ver_stride) : Align16(height_);
-        fps_          = config.fps;
-        bitrate_bps_  = config.bitrate_bps;
-        gop_          = config.gop;
-        frame_size_   = static_cast<std::size_t>(hor_stride_) * ver_stride_ * 3u / 2u;
+        coding_      = ToMppCodingType(config.codec);
+        width_       = config.width;
+        height_      = config.height;
+        hor_stride_  = (config.hor_stride > 0) ? Align16(config.hor_stride) : Align16(width_);
+        ver_stride_  = (config.ver_stride > 0) ? Align16(config.ver_stride) : Align16(height_);
+        fps_         = config.fps;
+        bitrate_bps_ = config.bitrate_bps;
+        gop_         = config.gop;
+        frame_size_  = static_cast<std::size_t>(hor_stride_) * ver_stride_ * 3u / 2u;
 
         MPP_RET ret = mpp_create(&ctx_, &api_);
         if (ret != MPP_OK || ctx_ == nullptr || api_ == nullptr)
@@ -145,33 +152,84 @@ class MppEncoder::Impl
 
         // ---- 码率控制：CBR、固定帧率、GOP ----
         set_status = SetCfgS32("rc:mode", MPP_ENC_RC_MODE_CBR);
-        if (set_status) { set_status = SetCfgS32("rc:fps_in_num", static_cast<RK_S32>(fps_)); }
-        if (set_status) { set_status = SetCfgS32("rc:fps_in_denorm", 1); }
-        if (set_status) { set_status = SetCfgS32("rc:fps_out_num", static_cast<RK_S32>(fps_)); }
-        if (set_status) { set_status = SetCfgS32("rc:fps_out_denorm", 1); }
-        if (set_status) { set_status = SetCfgS32("rc:gop", static_cast<RK_S32>(gop_)); }
-        if (set_status) { set_status = SetCfgS32("rc:bps_target", static_cast<RK_S32>(bitrate_bps_)); }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:fps_in_num", static_cast<RK_S32>(fps_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:fps_in_denorm", 1);
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:fps_out_num", static_cast<RK_S32>(fps_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:fps_out_denorm", 1);
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:gop", static_cast<RK_S32>(gop_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("rc:bps_target", static_cast<RK_S32>(bitrate_bps_));
+        }
 
         // ---- 输入控制：分辨率/stride（16 对齐）/格式 NV12 ----
-        if (set_status) { set_status = SetCfgS32("prep:width", static_cast<RK_S32>(width_)); }
-        if (set_status) { set_status = SetCfgS32("prep:height", static_cast<RK_S32>(height_)); }
-        if (set_status) { set_status = SetCfgS32("prep:hor_stride", static_cast<RK_S32>(hor_stride_)); }
-        if (set_status) { set_status = SetCfgS32("prep:ver_stride", static_cast<RK_S32>(ver_stride_)); }
-        if (set_status) { set_status = SetCfgS32("prep:format", MPP_FMT_YUV420SP); }
+        if (set_status)
+        {
+            set_status = SetCfgS32("prep:width", static_cast<RK_S32>(width_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("prep:height", static_cast<RK_S32>(height_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("prep:hor_stride", static_cast<RK_S32>(hor_stride_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("prep:ver_stride", static_cast<RK_S32>(ver_stride_));
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("prep:format", MPP_FMT_YUV420SP);
+        }
 
         // ---- 协议控制 ----
-        if (set_status) { set_status = SetCfgS32("codec:type", static_cast<RK_S32>(coding_)); }
+        if (set_status)
+        {
+            set_status = SetCfgS32("codec:type", static_cast<RK_S32>(coding_));
+        }
         if (set_status && coding_ == MPP_VIDEO_CodingAVC)
         {
             set_status = SetCfgS32("h264:profile", 100);  // High Profile
-            if (set_status) { set_status = SetCfgS32("h264:level", PickH264Level()); }
-            if (set_status) { set_status = SetCfgS32("h264:cabac_en", 1); }
+            if (set_status)
+            {
+                set_status = SetCfgS32("h264:level", PickH264Level());
+            }
+            if (set_status)
+            {
+                set_status = SetCfgS32("h264:cabac_en", 1);
+            }
         }
 
         // split NONE：一帧对应一个输出包（任务书要求），输出为 Annex-B。
-        if (set_status) { set_status = SetCfgS32("split:mode", MPP_ENC_SPLIT_NONE); }
-        if (set_status) { set_status = SetCfgS32("split:arg", 0); }
-        if (set_status) { set_status = SetCfgS32("split:out", 0); }
+        if (set_status)
+        {
+            set_status = SetCfgS32("split:mode", MPP_ENC_SPLIT_NONE);
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("split:arg", 0);
+        }
+        if (set_status)
+        {
+            set_status = SetCfgS32("split:out", 0);
+        }
 
         if (!set_status)
         {
@@ -188,7 +246,7 @@ class MppEncoder::Impl
 
         // 每个 IDR 都携带 SPS/PPS（保证关键帧独立可解）。
         MppEncHeaderMode header_mode = MPP_ENC_HEADER_MODE_EACH_IDR;
-        ret = api_->control(ctx_, MPP_ENC_SET_HEADER_MODE, &header_mode);
+        ret                          = api_->control(ctx_, MPP_ENC_SET_HEADER_MODE, &header_mode);
         if (ret != MPP_OK)
         {
             ReleaseAll();
@@ -196,7 +254,7 @@ class MppEncoder::Impl
         }
 
         RK_S64 timeout_ms = kMppIOTimeoutMs;
-        ret = api_->control(ctx_, MPP_SET_INPUT_TIMEOUT, &timeout_ms);
+        ret               = api_->control(ctx_, MPP_SET_INPUT_TIMEOUT, &timeout_ms);
         if (ret == MPP_OK)
         {
             ret = api_->control(ctx_, MPP_SET_OUTPUT_TIMEOUT, &timeout_ms);
@@ -245,8 +303,8 @@ class MppEncoder::Impl
 
         stop_requested_.store(false, std::memory_order_relaxed);
         initialized_ = true;
-        AM_LOG_INFO() << "[MPP-ENC] 初始化: " << width_ << "x" << height_
-                      << " stride(" << hor_stride_ << "," << ver_stride_ << ") fps=" << fps_
+        AM_LOG_INFO() << "[MPP-ENC] 初始化: " << width_ << "x" << height_ << " stride("
+                      << hor_stride_ << "," << ver_stride_ << ") fps=" << fps_
                       << " bitrate=" << bitrate_bps_ << " gop=" << gop_;
         return Status::MakeOk();
     }
@@ -268,10 +326,9 @@ class MppEncoder::Impl
         if (frame.meta.width != width_ || frame.meta.height != height_)
         {
             return Status(StatusCode::kInvalidArgument,
-                          "[MPP-ENC] 输入分辨率与配置不符: " +
-                              std::to_string(frame.meta.width) + "x" +
-                              std::to_string(frame.meta.height) + " != " +
-                              std::to_string(width_) + "x" + std::to_string(height_));
+                          "[MPP-ENC] 输入分辨率与配置不符: " + std::to_string(frame.meta.width) +
+                              "x" + std::to_string(frame.meta.height) +
+                              " != " + std::to_string(width_) + "x" + std::to_string(height_));
         }
         if (frame.planes.empty() || frame.planes[0].data == nullptr)
         {
@@ -294,7 +351,7 @@ class MppEncoder::Impl
         }
 
         MppFrame input_frame = nullptr;
-        ret = mpp_frame_init(&input_frame);
+        ret                  = mpp_frame_init(&input_frame);
         if (ret != MPP_OK || input_frame == nullptr)
         {
             mpp_buffer_put(buffer);
@@ -347,8 +404,8 @@ class MppEncoder::Impl
         const auto start = std::chrono::steady_clock::now();
         while (!stop_requested_.load(std::memory_order_relaxed))
         {
-            MppPacket packet = nullptr;
-            const MPP_RET ret = api_->encode_get_packet(ctx_, &packet);
+            MppPacket     packet = nullptr;
+            const MPP_RET ret    = api_->encode_get_packet(ctx_, &packet);
             if (ret == MPP_OK && packet != nullptr)
             {
                 void*  ptr = mpp_packet_get_pos(packet);
@@ -440,7 +497,7 @@ class MppEncoder::Impl
         initialized_ = false;
     }
 
-  private:
+   private:
     Status ValidateConfig(const EncoderConfig& config) const
     {
         if (config.width == 0 || config.height == 0 || config.fps == 0)
@@ -488,18 +545,17 @@ class MppEncoder::Impl
             return Status(StatusCode::kInternal, "[MPP-ENC] 输入缓冲无映射地址");
         }
 
-        const std::uint32_t src_stride =
-            (frame.meta.stride > 0) ? frame.meta.stride : width_;
-        const PlaneView& y_plane = frame.planes[0];
-        const std::uint32_t y_row_stride = (y_plane.row_stride > 0) ? y_plane.row_stride
-                                                                   : src_stride;
-        const std::uint8_t* uv_src = nullptr;
+        const std::uint32_t src_stride = (frame.meta.stride > 0) ? frame.meta.stride : width_;
+        const PlaneView&    y_plane    = frame.planes[0];
+        const std::uint32_t y_row_stride =
+            (y_plane.row_stride > 0) ? y_plane.row_stride : src_stride;
+        const std::uint8_t* uv_src        = nullptr;
         std::uint32_t       uv_row_stride = 0;
         if (frame.planes.size() > 1 && frame.planes[1].data != nullptr)
         {
-            uv_src        = frame.planes[1].data;
-            uv_row_stride = (frame.planes[1].row_stride > 0) ? frame.planes[1].row_stride
-                                                             : src_stride;
+            uv_src = frame.planes[1].data;
+            uv_row_stride =
+                (frame.planes[1].row_stride > 0) ? frame.planes[1].row_stride : src_stride;
         }
         else
         {
@@ -539,28 +595,27 @@ class MppEncoder::Impl
     {
         if (mpp_packet_has_meta(packet) != 0)
         {
-            MppMeta meta = mpp_packet_get_meta(packet);
+            MppMeta meta     = mpp_packet_get_meta(packet);
             RK_S32  is_intra = 0;
-            if (meta != nullptr &&
-                mpp_meta_get_s32(meta, KEY_OUTPUT_INTRA, &is_intra) == MPP_OK)
+            if (meta != nullptr && mpp_meta_get_s32(meta, KEY_OUTPUT_INTRA, &is_intra) == MPP_OK)
             {
                 return is_intra != 0;
             }
         }
 
-        void*  ptr = mpp_packet_get_pos(packet);
-        size_t len = mpp_packet_get_length(packet);
+        void*               ptr   = mpp_packet_get_pos(packet);
+        size_t              len   = mpp_packet_get_length(packet);
         const std::uint8_t* bytes = static_cast<const std::uint8_t*>(ptr);
         // 跳过 Annex-B 起始码（3/4 字节）。
         if (len >= 5 && bytes[0] == 0 && bytes[1] == 0 && bytes[2] == 0 && bytes[3] == 1)
         {
             bytes += 4;
-            len   -= 4;
+            len -= 4;
         }
         else if (len >= 4 && bytes[0] == 0 && bytes[1] == 0 && bytes[2] == 1)
         {
             bytes += 3;
-            len   -= 3;
+            len -= 3;
         }
         else
         {
@@ -615,56 +670,42 @@ class MppEncoder::Impl
         submitted_frames_ = 0;
     }
 
-    MppCtx          ctx_            = nullptr;
-    MppApi*         api_            = nullptr;
-    MppEncCfg       enc_cfg_        = nullptr;
-    MppBufferGroup  input_group_    = nullptr;
-    MppBufferGroup  header_group_   = nullptr;
-    MppBuffer       header_buf_     = nullptr;
-    MppCodingType   coding_         = MPP_VIDEO_CodingAVC;
-    std::uint32_t   width_          = 0;
-    std::uint32_t   height_         = 0;
-    std::uint32_t   hor_stride_     = 0;
-    std::uint32_t   ver_stride_     = 0;
-    std::uint32_t   fps_            = 0;
-    std::uint32_t   gop_            = 0;
-    std::int64_t    bitrate_bps_    = 0;
-    std::size_t     frame_size_     = 0;
-    std::uint64_t   submitted_frames_ = 0;
-    std::int64_t    next_fallback_pts_us_ = 0;
+    MppCtx            ctx_                  = nullptr;
+    MppApi*           api_                  = nullptr;
+    MppEncCfg         enc_cfg_              = nullptr;
+    MppBufferGroup    input_group_          = nullptr;
+    MppBufferGroup    header_group_         = nullptr;
+    MppBuffer         header_buf_           = nullptr;
+    MppCodingType     coding_               = MPP_VIDEO_CodingAVC;
+    std::uint32_t     width_                = 0;
+    std::uint32_t     height_               = 0;
+    std::uint32_t     hor_stride_           = 0;
+    std::uint32_t     ver_stride_           = 0;
+    std::uint32_t     fps_                  = 0;
+    std::uint32_t     gop_                  = 0;
+    std::int64_t      bitrate_bps_          = 0;
+    std::size_t       frame_size_           = 0;
+    std::uint64_t     submitted_frames_     = 0;
+    std::int64_t      next_fallback_pts_us_ = 0;
     std::atomic<bool> stop_requested_{false};
-    bool            initialized_     = false;
+    bool              initialized_ = false;
 };
 
-MppEncoder::MppEncoder() : impl_(std::make_unique<Impl>())
-{
-}
+MppEncoder::MppEncoder() : impl_(std::make_unique<Impl>()) {}
 
 MppEncoder::~MppEncoder() = default;
 
-Status MppEncoder::Initialize(const EncoderConfig& config)
-{
-    return impl_->Initialize(config);
-}
+Status MppEncoder::Initialize(const EncoderConfig& config) { return impl_->Initialize(config); }
 
-Status MppEncoder::Encode(const VideoFrame& frame)
-{
-    return impl_->Encode(frame);
-}
+Status MppEncoder::Encode(const VideoFrame& frame) { return impl_->Encode(frame); }
 
 Status MppEncoder::GetPacket(EncodedPacket* out, std::chrono::milliseconds timeout)
 {
     return impl_->GetPacket(out, timeout);
 }
 
-Status MppEncoder::GetHeader(EncodedPacket* out)
-{
-    return impl_->GetHeader(out);
-}
+Status MppEncoder::GetHeader(EncodedPacket* out) { return impl_->GetHeader(out); }
 
-void MppEncoder::Close()
-{
-    impl_->Close();
-}
+void MppEncoder::Close() { impl_->Close(); }
 
 }  // namespace animal_monitor

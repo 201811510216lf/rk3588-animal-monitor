@@ -5,9 +5,11 @@
 #include <ctime>
 #include <iomanip>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // 线程安全的本地时间格式化（Windows localtime_s / POSIX localtime_r）。
 std::string FormatLocalTime(const std::tm& tm_value)
@@ -34,11 +36,16 @@ const char* LogLevelName(LogLevel level)
 {
     switch (level)
     {
-        case LogLevel::kDebug:   return "DEBUG";
-        case LogLevel::kInfo:    return "INFO";
-        case LogLevel::kWarning: return "WARNING";
-        case LogLevel::kError:   return "ERROR";
-        case LogLevel::kOff:     return "OFF";
+        case LogLevel::kDebug:
+            return "DEBUG";
+        case LogLevel::kInfo:
+            return "INFO";
+        case LogLevel::kWarning:
+            return "WARNING";
+        case LogLevel::kError:
+            return "ERROR";
+        case LogLevel::kOff:
+            return "OFF";
     }
     return "UNKNOWN";
 }
@@ -75,9 +82,9 @@ void Logger::Log(LogLevel level, const char* file, int line, const std::string& 
         return;
     }
 
-    const auto now        = std::chrono::system_clock::now();
-    const auto now_ms     = std::chrono::duration_cast<std::chrono::milliseconds>(
-                              now.time_since_epoch());
+    const auto now = std::chrono::system_clock::now();
+    const auto now_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
     const auto time_t_now = std::chrono::system_clock::to_time_t(now);
     const auto tm_value   = ToLocalTime(time_t_now);
 
@@ -89,12 +96,8 @@ void Logger::Log(LogLevel level, const char* file, int line, const std::string& 
 
 LogStream::LogStream(LogLevel level, const char* file, int line)
     : level_(level), file_(file), line_(line)
-{
-}
+{}
 
-LogStream::~LogStream()
-{
-    Logger::Instance().Log(level_, file_, line_, buffer_.str());
-}
+LogStream::~LogStream() { Logger::Instance().Log(level_, file_, line_, buffer_.str()); }
 
 }  // namespace animal_monitor

@@ -25,9 +25,11 @@
 
 #include "animal_monitor/common/modbus_crc.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr std::size_t kMaxModbusWireSize = 256;  // PDU 上限 253 + 从站 + 功能码 + CRC
 
@@ -91,13 +93,9 @@ int BaudConstant(int baud)
 Rs485ModbusClient::Rs485ModbusClient(std::string tty_path, int baud, Rs485Parity parity,
                                      int timeout_ms)
     : tty_path_(std::move(tty_path)), baud_(baud), parity_(parity), timeout_ms_(timeout_ms)
-{
-}
+{}
 
-Rs485ModbusClient::~Rs485ModbusClient()
-{
-    Close();
-}
+Rs485ModbusClient::~Rs485ModbusClient() { Close(); }
 
 Status Rs485ModbusClient::Open()
 {
@@ -116,8 +114,7 @@ Status Rs485ModbusClient::Open()
     const int speed = BaudConstant(baud_);
     if (speed < 0)
     {
-        return Status(StatusCode::kInvalidArgument,
-                      "不支持的波特率: " + std::to_string(baud_));
+        return Status(StatusCode::kInvalidArgument, "不支持的波特率: " + std::to_string(baud_));
     }
 
     const int fd = ::open(tty_path_.c_str(), O_RDWR | O_NOCTTY | O_CLOEXEC);
@@ -126,9 +123,7 @@ Status Rs485ModbusClient::Open()
         return StatusFromErrno(errno, "打开串口 " + tty_path_ + " 失败");
     }
 
-    struct termios tio
-    {
-    };
+    struct termios tio{};
     if (::tcgetattr(fd, &tio) < 0)
     {
         const int saved = errno;
@@ -136,10 +131,10 @@ Status Rs485ModbusClient::Open()
         return StatusFromErrno(saved, "tcgetattr 失败");
     }
 
-    ::cfmakeraw(&tio);  // raw 模式：VMIN=1、VTIME=0，读取配合 poll 使用
+    ::cfmakeraw(&tio);              // raw 模式：VMIN=1、VTIME=0，读取配合 poll 使用
     tio.c_cflag |= CREAD | CLOCAL;  // 本地串口，无调制解调器控制
     tio.c_cflag &= ~static_cast<tcflag_t>(CSIZE);
-    tio.c_cflag |= CS8;  // 8 数据位
+    tio.c_cflag |= CS8;                             // 8 数据位
     tio.c_cflag &= ~static_cast<tcflag_t>(CSTOPB);  // 1 停止位
     switch (parity_)
     {
@@ -169,9 +164,7 @@ Status Rs485ModbusClient::Open()
 
     // RS485 半双工模式：启用内核方向自动控制（RTS 在发送期间有效）。
     // 失败非致命：部分板卡收发器自带自动方向控制，无需内核切换。
-    struct serial_rs485 rs485
-    {
-    };
+    struct serial_rs485 rs485{};
     rs485.flags = SER_RS485_ENABLED | SER_RS485_RTS_ON_SEND;
     if (::ioctl(fd, TIOCSRS485, &rs485) < 0)
     {
@@ -191,11 +184,9 @@ Status Rs485ModbusClient::ReadExactly(std::vector<std::uint8_t>* out, std::size_
 {
     while (out->size() < count)
     {
-        struct pollfd pfd
-        {
-        };
-        pfd.fd     = fd_;
-        pfd.events = POLLIN;
+        struct pollfd pfd{};
+        pfd.fd                = fd_;
+        pfd.events            = POLLIN;
         const int poll_result = ::poll(&pfd, 1, timeout_ms_);
         if (poll_result < 0)
         {
@@ -210,10 +201,10 @@ Status Rs485ModbusClient::ReadExactly(std::vector<std::uint8_t>* out, std::size_
             return Status(StatusCode::kUnavailable, "串口异常事件");
         }
 
-        std::uint8_t buffer[64];
-        const std::size_t want = count - out->size();
-        const std::size_t chunk = want < sizeof(buffer) ? want : sizeof(buffer);
-        const ssize_t received = ::read(fd_, buffer, chunk);
+        std::uint8_t      buffer[64];
+        const std::size_t want     = count - out->size();
+        const std::size_t chunk    = want < sizeof(buffer) ? want : sizeof(buffer);
+        const ssize_t     received = ::read(fd_, buffer, chunk);
         if (received < 0)
         {
             return StatusFromErrno(errno, "读取串口失败");
@@ -286,8 +277,8 @@ Status Rs485ModbusClient::Transact(const ModbusFrame& request, ModbusFrame* resp
             return Status(status.Code(), status.Message() + "（已重试一次）");
         }
 
-        const std::uint8_t function = received[1];
-        std::size_t remaining = 0;
+        const std::uint8_t function  = received[1];
+        std::size_t        remaining = 0;
         if ((function & 0x80) != 0)
         {
             remaining = 3;  // 异常码 + CRC
@@ -340,7 +331,7 @@ Status Rs485ModbusClient::Transact(const ModbusFrame& request, ModbusFrame* resp
         }
 
         ModbusFrame parsed;
-        std::string  err;
+        std::string err;
         status = ParseFrame(received, &parsed, &err);
         if (!status.Ok())
         {

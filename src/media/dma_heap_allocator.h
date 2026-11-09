@@ -25,14 +25,15 @@
 #include "animal_monitor/logging/logger.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 单块 dma-heap 缓冲的 RAII 封装：持有 dmabuf fd 与用户态 mmap 映射。
 // 析构自动 munmap + close；只可移动、不可复制（所有权唯一，禁止裸 owning 指针）。
 // 注意：同一 fd 在 DmaBuffer 之外不得再被 close；需要转交时使用移动语义。
 class DmaBuffer
 {
-  public:
+   public:
     DmaBuffer() = default;
     ~DmaBuffer();
 
@@ -44,13 +45,13 @@ class DmaBuffer
     // 提前显式释放（munmap + close），幂等；析构会再次调用。
     void Reset();
 
-    bool            Valid() const { return fd_ >= 0 && va_ != nullptr && size_ > 0; }
-    int             Fd() const { return fd_; }
-    void*           Address() const { return va_; }
-    std::uint8_t*   ByteAddress() const { return static_cast<std::uint8_t*>(va_); }
-    std::size_t     Size() const { return size_; }
+    bool          Valid() const { return fd_ >= 0 && va_ != nullptr && size_ > 0; }
+    int           Fd() const { return fd_; }
+    void*         Address() const { return va_; }
+    std::uint8_t* ByteAddress() const { return static_cast<std::uint8_t*>(va_); }
+    std::size_t   Size() const { return size_; }
 
-  private:
+   private:
     friend class DmaHeapAllocator;
 
     int         fd_   = -1;
@@ -64,20 +65,19 @@ class DmaBuffer
 //           heap 路径参数化（AGENTS：避免硬编码设备路径，默认值仅作板级配置兜底）。
 class DmaHeapAllocator
 {
-  public:
+   public:
     static constexpr const char* kDefaultHeapPath = "/dev/dma_heap/system";
 
     explicit DmaHeapAllocator(std::string heap_path = kDefaultHeapPath)
         : heap_path_(std::move(heap_path))
-    {
-    }
+    {}
 
     // 分配 size 字节（失败返回 Status，绝不返回裸 -1）。
     Status Allocate(std::size_t size, DmaBuffer* out);
 
     const std::string& HeapPath() const { return heap_path_; }
 
-  private:
+   private:
     std::string heap_path_;
 };
 
@@ -91,25 +91,23 @@ Status DmaSyncEndRead(int fd);
 // VideoFrame.owner 可 dynamic_cast 到本类型：成功则优先 fd 零拷贝，失败回退虚拟地址。
 class FdBufferOwner : public BufferOwner
 {
-  public:
-    virtual int          Fd() const   = 0;
-    virtual std::size_t  Size() const = 0;
+   public:
+    virtual int         Fd() const   = 0;
+    virtual std::size_t Size() const = 0;
 };
 
 // dma-heap 帧所有权：独占持有 DmaBuffer，析构即释放（RGA 输出、合成画布等场景）。
 class DmaHeapFrameOwner : public FdBufferOwner
 {
-  public:
+   public:
     DmaHeapFrameOwner() = default;
-    explicit DmaHeapFrameOwner(DmaBuffer buffer) : buffer_(std::move(buffer))
-    {
-    }
+    explicit DmaHeapFrameOwner(DmaBuffer buffer) : buffer_(std::move(buffer)) {}
 
-    int          Fd() const override { return buffer_.Fd(); }
-    std::size_t  Size() const override { return buffer_.Size(); }
-    void*        Address() const { return buffer_.Address(); }
+    int         Fd() const override { return buffer_.Fd(); }
+    std::size_t Size() const override { return buffer_.Size(); }
+    void*       Address() const { return buffer_.Address(); }
 
-  private:
+   private:
     DmaBuffer buffer_;
 };
 
@@ -117,10 +115,7 @@ class DmaHeapFrameOwner : public FdBufferOwner
 // 内联实现（本头为 v4l2_camera/rga_processor 共用的私有实现头，无独立 .cpp）。
 // ---------------------------------------------------------------------------
 
-inline DmaBuffer::~DmaBuffer()
-{
-    Reset();
-}
+inline DmaBuffer::~DmaBuffer() { Reset(); }
 
 inline DmaBuffer::DmaBuffer(DmaBuffer&& other) noexcept
     : fd_(other.fd_), va_(other.va_), size_(other.size_)
@@ -135,11 +130,11 @@ inline DmaBuffer& DmaBuffer::operator=(DmaBuffer&& other) noexcept
     if (this != &other)
     {
         Reset();
-        fd_       = other.fd_;
-        va_       = other.va_;
-        size_     = other.size_;
-        other.fd_ = -1;
-        other.va_ = nullptr;
+        fd_         = other.fd_;
+        va_         = other.va_;
+        size_       = other.size_;
+        other.fd_   = -1;
+        other.va_   = nullptr;
         other.size_ = 0;
     }
     return *this;
@@ -151,8 +146,7 @@ inline void DmaBuffer::Reset()
     {
         if (::munmap(va_, size_) != 0)
         {
-            AM_LOG_WARNING() << "[dma-heap] munmap fd=" << fd_ << " 失败: "
-                             << std::strerror(errno);
+            AM_LOG_WARNING() << "[dma-heap] munmap fd=" << fd_ << " 失败: " << std::strerror(errno);
         }
         va_ = nullptr;
     }
@@ -160,8 +154,7 @@ inline void DmaBuffer::Reset()
     {
         if (::close(fd_) != 0)
         {
-            AM_LOG_WARNING() << "[dma-heap] close fd=" << fd_ << " 失败: "
-                             << std::strerror(errno);
+            AM_LOG_WARNING() << "[dma-heap] close fd=" << fd_ << " 失败: " << std::strerror(errno);
         }
         fd_ = -1;
     }
@@ -181,9 +174,9 @@ inline Status DmaHeapAllocator::Allocate(std::size_t size, DmaBuffer* out)
     const int heap_fd = ::open(heap_path_.c_str(), O_RDWR | O_CLOEXEC);
     if (heap_fd < 0)
     {
-        return Status(StatusCode::kHardwareUnavailable,
-                      std::string("[dma-heap] 打开 ") + heap_path_ + " 失败: " +
-                          std::strerror(errno));
+        return Status(
+            StatusCode::kHardwareUnavailable,
+            std::string("[dma-heap] 打开 ") + heap_path_ + " 失败: " + std::strerror(errno));
     }
 
     // 注意：dma_heap_allocation_data 字段布局随内核头版本略有差异（3 字段/4 字段），
@@ -194,9 +187,8 @@ inline Status DmaHeapAllocator::Allocate(std::size_t size, DmaBuffer* out)
 
     if (::ioctl(heap_fd, DMA_HEAP_IOCTL_ALLOC, &request) < 0)
     {
-        const std::string message = std::string("[dma-heap] 分配 ") +
-                                    std::to_string(size) + " 字节失败: " +
-                                    std::strerror(errno);
+        const std::string message = std::string("[dma-heap] 分配 ") + std::to_string(size) +
+                                    " 字节失败: " + std::strerror(errno);
         ::close(heap_fd);
         return Status(StatusCode::kResourceExhausted, message);
     }
@@ -206,8 +198,7 @@ inline Status DmaHeapAllocator::Allocate(std::size_t size, DmaBuffer* out)
     if (mapped == MAP_FAILED)
     {
         const std::string message = std::string("[dma-heap] mmap fd=") +
-                                    std::to_string(request.fd) + " 失败: " +
-                                    std::strerror(errno);
+                                    std::to_string(request.fd) + " 失败: " + std::strerror(errno);
         ::close(request.fd);
         return Status(StatusCode::kInternal, message);
     }
@@ -228,9 +219,9 @@ inline Status DmaSyncStartRead(int fd)
     sync.flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_READ;
     if (::ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync) < 0)
     {
-        return Status(StatusCode::kInternal,
-                      std::string("[dma-buf] SYNC_START(READ) fd=") + std::to_string(fd) +
-                          " 失败: " + std::strerror(errno));
+        return Status(StatusCode::kInternal, std::string("[dma-buf] SYNC_START(READ) fd=") +
+                                                 std::to_string(fd) +
+                                                 " 失败: " + std::strerror(errno));
     }
     return Status::MakeOk();
 }
@@ -245,9 +236,9 @@ inline Status DmaSyncEndRead(int fd)
     sync.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_READ;
     if (::ioctl(fd, DMA_BUF_IOCTL_SYNC, &sync) < 0)
     {
-        return Status(StatusCode::kInternal,
-                      std::string("[dma-buf] SYNC_END(READ) fd=") + std::to_string(fd) +
-                          " 失败: " + std::strerror(errno));
+        return Status(StatusCode::kInternal, std::string("[dma-buf] SYNC_END(READ) fd=") +
+                                                 std::to_string(fd) +
+                                                 " 失败: " + std::strerror(errno));
     }
     return Status::MakeOk();
 }

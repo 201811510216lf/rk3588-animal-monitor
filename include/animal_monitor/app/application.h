@@ -8,13 +8,14 @@
 #include "animal_monitor/app/service.h"
 #include "animal_monitor/config/config_loader.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 应用容器：main 只负责参数解析与创建 Application；
 // 配置加载、服务注册、启动/停止顺序、退出信号都在这里。
 class Application
 {
-  public:
+   public:
     explicit Application(std::string config_path);
 
     Application(const Application&)            = delete;
@@ -37,7 +38,7 @@ class Application
     };
     std::vector<ServiceStatus> DescribeServices() const;
 
-  private:
+   private:
     Status RegisterServices();
 
     std::string                           config_path_;

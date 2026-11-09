@@ -6,12 +6,14 @@
 
 #include "animal_monitor/environment/htu21d_math.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // CRC-8 多项式 0x131（MSB 先行时每次移位异或低 8 位 0x31）。
-constexpr std::uint8_t kCrc8Poly = 0x31;
+constexpr std::uint8_t kCrc8Poly    = 0x31;
 constexpr int          kBitsPerByte = 8;
 
 // 湿度换算：RH(%) = -6 + 125 × Srh / 2^16。
@@ -28,7 +30,7 @@ constexpr float kTempDivisor = 65536.0f;
 
 std::uint8_t Htu21dCrc8(std::uint8_t value_msb, std::uint8_t value_lsb)
 {
-    std::uint8_t crc = 0x00;
+    std::uint8_t       crc      = 0x00;
     const std::uint8_t bytes[2] = {value_msb, value_lsb};
     for (int byte = 0; byte < 2; ++byte)
     {

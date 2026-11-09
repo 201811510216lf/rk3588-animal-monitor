@@ -6,9 +6,11 @@
 #include <fstream>
 #include <sstream>
 
-namespace animal_monitor::config {
+namespace animal_monitor::config
+{
 
-namespace {
+namespace
+{
 
 constexpr int  kMaxIndent   = 64;
 constexpr char kCommentChar = '#';
@@ -110,7 +112,7 @@ struct Level
 
 Status ParseLines(const std::vector<std::string>& lines, ConfigValue* root)
 {
-    *root              = ConfigValue::MakeMap();
+    *root = ConfigValue::MakeMap();
     std::vector<Level> stack;
 
     for (std::size_t idx = 0; idx < lines.size(); ++idx)
@@ -145,7 +147,7 @@ Status ParseLines(const std::vector<std::string>& lines, ConfigValue* root)
 
         const bool is_sequence_item =
             trimmed == "-" || (trimmed.size() >= 2 && trimmed[0] == '-' && trimmed[1] == ' ');
-        const auto colon = trimmed.find(':');
+        const auto colon           = trimmed.find(':');
         const bool is_mapping_line = !is_sequence_item && colon != std::string::npos;
 
         if (!is_sequence_item && !is_mapping_line)
@@ -190,8 +192,8 @@ Status ParseLines(const std::vector<std::string>& lines, ConfigValue* root)
                     // "- key: value" → 序列元素为 map
                     const std::string key = Trim(item_text.substr(0, item_colon));
                     std::string       val = Trim(item_text.substr(item_colon + 1));
-                    if (key.empty() || !std::all_of(key.begin(), key.end(),
-                                                    [](char c) { return IsKeyChar(c); }))
+                    if (key.empty() ||
+                        !std::all_of(key.begin(), key.end(), [](char c) { return IsKeyChar(c); }))
                     {
                         return Status(StatusCode::kConfigurationError,
                                       ErrAt(line_no, "invalid key in sequence item"));
@@ -272,10 +274,7 @@ Status ParseLines(const std::vector<std::string>& lines, ConfigValue* root)
 
 }  // namespace
 
-const std::string& ConfigValue::Scalar() const
-{
-    return scalar_;
-}
+const std::string& ConfigValue::Scalar() const { return scalar_; }
 
 bool ConfigValue::AsBool(bool* out) const
 {
@@ -302,8 +301,8 @@ bool ConfigValue::AsInt64(std::int64_t* out) const
     {
         return false;
     }
-    char*             end   = nullptr;
-    const long long   value = std::strtoll(scalar_.c_str(), &end, 10);
+    char*           end   = nullptr;
+    const long long value = std::strtoll(scalar_.c_str(), &end, 10);
     if (end == scalar_.c_str() || *end != '\0')
     {
         return false;
@@ -343,20 +342,11 @@ const ConfigValue* ConfigValue::Find(const std::string& key) const
     return it == map_.end() ? nullptr : &it->second;
 }
 
-const std::map<std::string, ConfigValue>& ConfigValue::Map() const
-{
-    return map_;
-}
+const std::map<std::string, ConfigValue>& ConfigValue::Map() const { return map_; }
 
-const std::vector<ConfigValue>& ConfigValue::Sequence() const
-{
-    return sequence_;
-}
+const std::vector<ConfigValue>& ConfigValue::Sequence() const { return sequence_; }
 
-std::vector<ConfigValue>& ConfigValue::Sequence()
-{
-    return sequence_;
-}
+std::vector<ConfigValue>& ConfigValue::Sequence() { return sequence_; }
 
 ConfigValue ConfigValue::MakeScalar(std::string value)
 {
@@ -380,10 +370,7 @@ ConfigValue ConfigValue::MakeSequence()
     return result;
 }
 
-ConfigValue ConfigValue::MakePending()
-{
-    return ConfigValue();
-}
+ConfigValue ConfigValue::MakePending() { return ConfigValue(); }
 
 ConfigValue& ConfigValue::Insert(const std::string& key, ConfigValue value)
 {
@@ -475,9 +462,8 @@ Status ConfigValidator::Validate(const ConfigValue& root, std::string* problems)
     // 必需顶层键。board_profile 允许标量（boards/<name>.yaml 的配置名）
     // 或内联 map；其余一律要求为 map。
     static const std::vector<const char*> kRequiredTopLevel = {
-        "board_profile", "cameras", "composition", "encoder", "network",
-        "models",        "sensors", "peripherals", "storage", "ota",
-        "logging",       "health",  "queues",      "app",
+        "board_profile", "cameras", "composition", "encoder", "network", "models", "sensors",
+        "peripherals",   "storage", "ota",         "logging", "health",  "queues", "app",
     };
     for (const char* key : kRequiredTopLevel)
     {
@@ -515,9 +501,8 @@ Status ConfigValidator::Validate(const ConfigValue& root, std::string* problems)
             }
             else if (source->Scalar() != "mock" && source->Scalar() != "v4l2")
             {
-                issues << "cameras." << cam
-                       << ".source must be 'mock' or 'v4l2' (got '" << source->Scalar()
-                       << "'); ";
+                issues << "cameras." << cam << ".source must be 'mock' or 'v4l2' (got '"
+                       << source->Scalar() << "'); ";
             }
         }
     }

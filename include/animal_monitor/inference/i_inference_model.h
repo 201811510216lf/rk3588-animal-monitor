@@ -11,7 +11,8 @@
 #include "animal_monitor/inference/model_manifest.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // 推理模型抽象。所有权与并发约定：
 //   - Load 失败后对象不可用，须重新 Load；
@@ -19,7 +20,7 @@ namespace animal_monitor::inference {
 //   - 调度器不拥有模型指针，生命周期由应用层管理。
 class IInferenceModel
 {
-  public:
+   public:
     virtual ~IInferenceModel() = default;
 
     // 模型名：用于日志与调度指标键，构造后应保持稳定（不得在运行中改名）。

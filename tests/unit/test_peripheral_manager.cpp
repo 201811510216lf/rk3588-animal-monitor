@@ -14,7 +14,8 @@ using animal_monitor::PeripheralManager;
 using animal_monitor::PeripheralState;
 using animal_monitor::PeripheralStateName;
 
-namespace {
+namespace
+{
 
 AM_TEST(register_find_and_state_update)
 {
@@ -104,7 +105,4 @@ AM_TEST(count_tracks_registered_peripherals)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

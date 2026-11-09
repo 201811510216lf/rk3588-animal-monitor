@@ -5,9 +5,11 @@
 #include <cstring>
 #include <fstream>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // SHA-256 轮常量（FIPS 180-4 §4.2.2）。
 constexpr std::array<std::uint32_t, 64> kSha256RoundConstants = {
@@ -33,7 +35,7 @@ constexpr std::uint32_t RotateRight(std::uint32_t value, unsigned int bits)
 // FIPS 180-4 流式实现：按字节流处理，避免对齐/端序/别名陷阱。
 class Sha256Context
 {
-  public:
+   public:
     void Update(const std::uint8_t* data, std::size_t size)
     {
         total_bytes_ += size;
@@ -80,7 +82,7 @@ class Sha256Context
         return digest;
     }
 
-  private:
+   private:
     static constexpr std::size_t kBlockSize = 64;
 
     void ProcessBlock(const std::uint8_t* block)

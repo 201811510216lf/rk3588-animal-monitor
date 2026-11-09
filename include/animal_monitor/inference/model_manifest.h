@@ -14,7 +14,8 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // 迁移前未补算真实 sha256 时的占位值（legacy_detectors.yaml）。
 constexpr char kManifestSha256Placeholder[] = "NOT_COMPUTED";

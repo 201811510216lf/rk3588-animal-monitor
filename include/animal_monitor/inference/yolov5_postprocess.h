@@ -19,7 +19,8 @@
 
 #include "animal_monitor/inference/inference_types.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // 单输出头解码参数。anchors 指向 3 组宽高共 6 个 float（生命周期覆盖调用）。
 struct Yolov5HeadSpec

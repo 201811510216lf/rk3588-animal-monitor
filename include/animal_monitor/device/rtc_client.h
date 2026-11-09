@@ -16,7 +16,8 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // RTC 时间分解（公元纪年，1 月起）。
 struct RtcDateTime
@@ -32,14 +33,14 @@ struct RtcDateTime
 // RTC class 用户态客户端（/dev/rtcN + ioctl RTC_RD_TIME）。
 class RtcClient
 {
-  public:
+   public:
     // device_path：RTC cdev 节点，默认 Linux 标准节点 /dev/rtc0（可配置覆盖）。
     explicit RtcClient(std::string device_path = "/dev/rtc0");
 
     // RAII：析构时关闭节点。
     ~RtcClient();
 
-    RtcClient(const RtcClient&) = delete;
+    RtcClient(const RtcClient&)            = delete;
     RtcClient& operator=(const RtcClient&) = delete;
 
     // 打开 RTC 节点（O_RDONLY | O_CLOEXEC）。
@@ -56,7 +57,7 @@ class RtcClient
 
     bool IsOpen() const { return fd_ >= 0; }
 
-  private:
+   private:
     std::string device_path_;
     int         fd_ = -1;
 };

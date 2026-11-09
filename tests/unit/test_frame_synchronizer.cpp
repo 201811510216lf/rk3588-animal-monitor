@@ -10,13 +10,14 @@ using animal_monitor::FrameSynchronizer;
 using animal_monitor::VideoFrame;
 using animal_monitor::VideoFramePtr;
 
-namespace {
+namespace
+{
 
 using namespace std::chrono_literals;
 
 VideoFramePtr MakeFrame(std::int64_t monotonic_ns)
 {
-    auto frame = std::make_shared<VideoFrame>();
+    auto frame                          = std::make_shared<VideoFrame>();
     frame->meta.timestamps.monotonic_ns = monotonic_ns;
     return frame;
 }
@@ -86,12 +87,14 @@ AM_TEST(close_cancels_pending_pop)
     FrameSynchronizer         sync(config);
 
     std::atomic<bool> done{false};
-    std::thread       popper([&sync, &done] {
-        VideoFramePtr left;
-        VideoFramePtr right;
-        const auto    status = sync.PopPair(&left, &right, 10s);
-        done.store(status.Code() == animal_monitor::StatusCode::kCancelled);
-    });
+    std::thread       popper(
+        [&sync, &done]
+        {
+            VideoFramePtr left;
+            VideoFramePtr right;
+            const auto    status = sync.PopPair(&left, &right, 10s);
+            done.store(status.Code() == animal_monitor::StatusCode::kCancelled);
+        });
 
     std::this_thread::sleep_for(50ms);
     sync.Close();
@@ -119,13 +122,10 @@ AM_TEST(queue_full_drops_oldest)
     AM_EXPECT_EQ(right->meta.timestamps.monotonic_ns, 1'200'000'000LL);
 
     const auto metrics = sync.GetMetrics();
-    AM_EXPECT_EQ(metrics.drops[0], 1u);        // 队列满换出 1.0s
-    AM_EXPECT_EQ(metrics.desync_drops, 1u);    // 1.1s 超容差被弃
+    AM_EXPECT_EQ(metrics.drops[0], 1u);      // 队列满换出 1.0s
+    AM_EXPECT_EQ(metrics.desync_drops, 1u);  // 1.1s 超容差被弃
 }
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

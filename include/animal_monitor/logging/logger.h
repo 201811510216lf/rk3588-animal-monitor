@@ -4,7 +4,8 @@
 #include <sstream>
 #include <string>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 enum class LogLevel
 {
@@ -21,7 +22,7 @@ const char* LogLevelName(LogLevel level);
 // （status: planned，见 docs/architecture/initial_architecture.md）。
 class Logger
 {
-  public:
+   public:
     static Logger& Instance();
 
     void     SetLevel(LogLevel level);
@@ -29,7 +30,7 @@ class Logger
 
     void Log(LogLevel level, const char* file, int line, const std::string& message);
 
-  private:
+   private:
     Logger();
 
     mutable std::mutex mutex_;
@@ -40,7 +41,7 @@ class Logger
 //   AM_LOG_INFO() << "camera " << id << " started";
 class LogStream
 {
-  public:
+   public:
     LogStream(LogLevel level, const char* file, int line);
     ~LogStream();
 
@@ -54,7 +55,7 @@ class LogStream
         return *this;
     }
 
-  private:
+   private:
     LogLevel           level_;
     const char*        file_;
     int                line_;
@@ -65,8 +66,7 @@ class LogStream
 
 #define AM_LOG_DEBUG() \
     animal_monitor::LogStream(animal_monitor::LogLevel::kDebug, __FILE__, __LINE__)
-#define AM_LOG_INFO() \
-    animal_monitor::LogStream(animal_monitor::LogLevel::kInfo, __FILE__, __LINE__)
+#define AM_LOG_INFO() animal_monitor::LogStream(animal_monitor::LogLevel::kInfo, __FILE__, __LINE__)
 #define AM_LOG_WARNING() \
     animal_monitor::LogStream(animal_monitor::LogLevel::kWarning, __FILE__, __LINE__)
 #define AM_LOG_ERROR() \

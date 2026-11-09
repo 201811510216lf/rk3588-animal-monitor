@@ -5,19 +5,20 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 流发布抽象：ZLMediaKit 内嵌发布（目标板）、空发布（host 记录统计）。
 class VideoPublisher
 {
-  public:
+   public:
     struct Config
     {
-        std::uint16_t rtsp_port = 8554;
-        std::uint16_t http_port = 8000;
-        std::uint16_t rtc_port  = 8001;
-        std::string   app       = "live";
-        std::string   stream    = "composite";
+        std::uint16_t rtsp_port     = 8554;
+        std::uint16_t http_port     = 8000;
+        std::uint16_t rtc_port      = 8001;
+        std::string   app           = "live";
+        std::string   stream        = "composite";
         bool          enable_webrtc = false;
         bool          enable_rtmp   = false;
     };

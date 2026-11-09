@@ -3,32 +3,23 @@
 #include <algorithm>
 #include <sstream>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 void Counter::Increment(std::uint64_t amount)
 {
     value_.fetch_add(amount, std::memory_order_relaxed);
 }
 
-std::uint64_t Counter::Value() const
-{
-    return value_.load(std::memory_order_relaxed);
-}
+std::uint64_t Counter::Value() const { return value_.load(std::memory_order_relaxed); }
 
-void Gauge::Set(std::int64_t value)
-{
-    value_.store(value, std::memory_order_relaxed);
-}
+void Gauge::Set(std::int64_t value) { value_.store(value, std::memory_order_relaxed); }
 
-std::int64_t Gauge::Value() const
-{
-    return value_.load(std::memory_order_relaxed);
-}
+std::int64_t Gauge::Value() const { return value_.load(std::memory_order_relaxed); }
 
 Histogram::Histogram(std::size_t max_samples)
     : max_samples_(max_samples == 0 ? 1 : max_samples), samples_(max_samples_)
-{
-}
+{}
 
 void Histogram::Record(std::int64_t value)
 {
@@ -38,7 +29,8 @@ void Histogram::Record(std::int64_t value)
     ++total_records_;
 }
 
-namespace {
+namespace
+{
 
 // 线性插值分位数；data 必须已排序。
 double Percentile(const std::vector<std::int64_t>& data, double q)
@@ -51,9 +43,9 @@ double Percentile(const std::vector<std::int64_t>& data, double q)
     {
         return static_cast<double>(data[0]);
     }
-    const double pos = q * static_cast<double>(data.size() - 1);
-    const auto   lo  = static_cast<std::size_t>(pos);
-    const auto   hi  = lo + 1 < data.size() ? lo + 1 : lo;
+    const double pos  = q * static_cast<double>(data.size() - 1);
+    const auto   lo   = static_cast<std::size_t>(pos);
+    const auto   hi   = lo + 1 < data.size() ? lo + 1 : lo;
     const double frac = pos - static_cast<double>(lo);
     return static_cast<double>(data[lo]) * (1.0 - frac) + static_cast<double>(data[hi]) * frac;
 }
@@ -64,9 +56,8 @@ Histogram::Snapshot Histogram::GetSnapshot() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    const std::size_t count = total_records_ < max_samples_
-                                  ? static_cast<std::size_t>(total_records_)
-                                  : max_samples_;
+    const std::size_t count =
+        total_records_ < max_samples_ ? static_cast<std::size_t>(total_records_) : max_samples_;
     Snapshot snap;
     if (count == 0)
     {
@@ -102,7 +93,7 @@ MetricsRegistry::MetricsRegistry() = default;
 Counter& MetricsRegistry::GetCounter(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto& entry = counters_[name];
+    auto&                       entry = counters_[name];
     if (!entry)
     {
         entry = std::make_unique<Counter>();
@@ -113,7 +104,7 @@ Counter& MetricsRegistry::GetCounter(const std::string& name)
 Gauge& MetricsRegistry::GetGauge(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto& entry = gauges_[name];
+    auto&                       entry = gauges_[name];
     if (!entry)
     {
         entry = std::make_unique<Gauge>();
@@ -124,7 +115,7 @@ Gauge& MetricsRegistry::GetGauge(const std::string& name)
 std::string MetricsRegistry::Dump() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    std::ostringstream         out;
+    std::ostringstream          out;
     for (const auto& [name, counter] : counters_)
     {
         out << name << '=' << counter->Value() << '\n';

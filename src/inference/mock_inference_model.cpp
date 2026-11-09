@@ -2,9 +2,11 @@
 
 #include <cstddef>
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
-namespace {
+namespace
+{
 
 constexpr float       kMockConfidence        = 0.9f;
 constexpr std::size_t kMockDefaultClassCount = 3;

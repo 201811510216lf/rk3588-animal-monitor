@@ -9,9 +9,11 @@
 #include <cmath>
 #include <map>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
-namespace {
+namespace
+{
 
 // 过期判断：时间戳早于 (now_ns - window_ns) 即过期。
 bool IsExpired(std::int64_t ts, std::int64_t now_ns, std::int64_t window_ns)
@@ -23,8 +25,7 @@ bool IsExpired(std::int64_t ts, std::int64_t now_ns, std::int64_t window_ns)
 
 FeatureFusion::FeatureFusion(std::int64_t window_ns, std::uint32_t max_events)
     : window_ns_(window_ns < 1 ? 1 : window_ns), max_events_(max_events < 1u ? 1u : max_events)
-{
-}
+{}
 
 void FeatureFusion::AddBehaviorEvent(const BehaviorEvent& event)
 {
@@ -110,8 +111,8 @@ std::vector<FeatureFusion::BehaviorStats> FeatureFusion::Snapshot(std::int64_t n
 
         for (const std::size_t index : valid_samples)
         {
-            const ThermalSample& sample = samples_[index];
-            bool                covered = false;
+            const ThermalSample& sample  = samples_[index];
+            bool                 covered = false;
             for (const std::int64_t event_ns : event_times)
             {
                 // 样本落在该事件尾随时间窗 [event_ns - window, event_ns] 内。

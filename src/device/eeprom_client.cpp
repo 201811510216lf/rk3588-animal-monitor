@@ -18,9 +18,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 Status StatusFromErrno(int error, const std::string& what)
 {
@@ -56,9 +58,7 @@ bool ToOffT(std::uint64_t offset, off_t* out)
 
 }  // namespace
 
-EepromClient::EepromClient(std::string sysfs_path) : sysfs_path_(std::move(sysfs_path))
-{
-}
+EepromClient::EepromClient(std::string sysfs_path) : sysfs_path_(std::move(sysfs_path)) {}
 
 Status EepromClient::Read(std::uint64_t offset, std::uint8_t* buf, std::size_t len)
 {
@@ -87,7 +87,7 @@ Status EepromClient::Read(std::uint64_t offset, std::uint8_t* buf, std::size_t l
         return StatusFromErrno(errno, "打开 EEPROM 失败: " + sysfs_path_);
     }
 
-    std::size_t done = 0;
+    std::size_t done  = 0;
     int         error = 0;
     while (done < len)
     {
@@ -141,7 +141,7 @@ Status EepromClient::Write(std::uint64_t offset, const std::uint8_t* buf, std::s
         return StatusFromErrno(errno, "打开 EEPROM 失败: " + sysfs_path_);
     }
 
-    std::size_t done = 0;
+    std::size_t done  = 0;
     int         error = 0;
     while (done < len)
     {

@@ -6,7 +6,8 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 enum class CompositorLayout : std::uint32_t
 {
@@ -16,11 +17,11 @@ enum class CompositorLayout : std::uint32_t
 
 struct CompositorConfig
 {
-    CompositorLayout layout      = CompositorLayout::kSideBySide;
-    std::uint32_t    out_width   = 1280;
-    std::uint32_t    out_height  = 720;
-    std::uint32_t    gap_px      = 0;
-    PixelFormat      out_format  = PixelFormat::kBgr888;
+    CompositorLayout layout     = CompositorLayout::kSideBySide;
+    std::uint32_t    out_width  = 1280;
+    std::uint32_t    out_height = 720;
+    std::uint32_t    gap_px     = 0;
+    PixelFormat      out_format = PixelFormat::kBgr888;
 };
 
 // 合成画布中的 tile 矩形（像素坐标，左上原点）。
@@ -43,7 +44,7 @@ Status ComputeTileRects(const CompositorConfig& config, int num_sources,
 // 为演示用途，目标板由 RGA 处理缩放）。
 class FrameCompositor
 {
-  public:
+   public:
     explicit FrameCompositor(CompositorConfig config);
 
     // inputs 数量须与构造时的源数量一致（2 路默认）；输出为单帧 BGR888。
@@ -51,7 +52,7 @@ class FrameCompositor
 
     const CompositorConfig& Config() const { return config_; }
 
-  private:
+   private:
     CompositorConfig config_;
 };
 

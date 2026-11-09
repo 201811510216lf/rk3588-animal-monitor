@@ -12,7 +12,8 @@
 
 #include "animal_monitor/common/frame_meta.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // 单条检测结果。bbox 为左上角 (x, y) 与宽高 (w, h)，单位：模型输入像素。
 struct Detection

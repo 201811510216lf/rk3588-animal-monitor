@@ -19,9 +19,11 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 Status StatusFromErrno(int error, const std::string& what)
 {
@@ -42,14 +44,9 @@ Status StatusFromErrno(int error, const std::string& what)
 
 }  // namespace
 
-CanClient::CanClient(std::string interface_name) : interface_name_(std::move(interface_name))
-{
-}
+CanClient::CanClient(std::string interface_name) : interface_name_(std::move(interface_name)) {}
 
-CanClient::~CanClient()
-{
-    Close();
-}
+CanClient::~CanClient() { Close(); }
 
 Status CanClient::Open()
 {
@@ -77,9 +74,7 @@ Status CanClient::Open()
                       "接口 " + interface_name_ + " 不存在: " + std::strerror(saved));
     }
 
-    struct sockaddr_can addr
-    {
-    };
+    struct sockaddr_can addr{};
     addr.can_family  = AF_CAN;
     addr.can_ifindex = ifindex;
     if (::bind(fd, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0)
@@ -104,9 +99,7 @@ Status CanClient::Send(const CanFrame& frame)
         return Status(StatusCode::kInvalidArgument, "非法 DLC（经典 CAN 合法范围 0..8）");
     }
 
-    struct can_frame cf
-    {
-    };
+    struct can_frame cf{};
     cf.can_id = frame.can_id & (frame.extended ? CAN_EFF_MASK : CAN_SFF_MASK);
     if (frame.extended)
     {
@@ -143,11 +136,9 @@ Status CanClient::Receive(CanFrame* frame, int timeout_ms)
         return Status(StatusCode::kUnavailable, "CAN socket 未打开");
     }
 
-    struct pollfd pfd
-    {
-    };
-    pfd.fd     = fd_;
-    pfd.events = POLLIN;
+    struct pollfd pfd{};
+    pfd.fd                = fd_;
+    pfd.events            = POLLIN;
     const int poll_result = ::poll(&pfd, 1, timeout_ms);
     if (poll_result < 0)
     {
@@ -162,10 +153,8 @@ Status CanClient::Receive(CanFrame* frame, int timeout_ms)
         return Status(StatusCode::kUnavailable, "CAN socket 异常事件");
     }
 
-    struct can_frame cf
-    {
-    };
-    const ssize_t received = ::read(fd_, &cf, sizeof(cf));
+    struct can_frame cf{};
+    const ssize_t    received = ::read(fd_, &cf, sizeof(cf));
     if (received < 0)
     {
         return StatusFromErrno(errno, "接收 CAN 帧失败");

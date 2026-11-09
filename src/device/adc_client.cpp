@@ -19,12 +19,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
-constexpr char kSysfsRoot[]    = "/sys/bus/iio/devices/";
-constexpr std::size_t kAttrCap = 64;  // raw/scale 属性文本远小于此
+constexpr char        kSysfsRoot[] = "/sys/bus/iio/devices/";
+constexpr std::size_t kAttrCap     = 64;  // raw/scale 属性文本远小于此
 
 Status StatusFromErrno(int error, const std::string& what)
 {
@@ -45,9 +47,7 @@ Status StatusFromErrno(int error, const std::string& what)
 
 }  // namespace
 
-AdcClient::AdcClient(std::string iio_device_name) : device_name_(std::move(iio_device_name))
-{
-}
+AdcClient::AdcClient(std::string iio_device_name) : device_name_(std::move(iio_device_name)) {}
 
 Status AdcClient::Open()
 {
@@ -62,17 +62,14 @@ Status AdcClient::Open()
 
     base_path_ = kSysfsRoot + device_name_;
 
-    struct stat info
-    {
-    };
+    struct stat info{};
     if (::stat(base_path_.c_str(), &info) < 0)
     {
         return StatusFromErrno(errno, "IIO 设备目录不存在: " + base_path_);
     }
     if (!S_ISDIR(info.st_mode))
     {
-        return Status(StatusCode::kHardwareUnavailable,
-                      "IIO 路径不是目录: " + base_path_);
+        return Status(StatusCode::kHardwareUnavailable, "IIO 路径不是目录: " + base_path_);
     }
 
     open_ = true;
@@ -122,9 +119,8 @@ Status AdcClient::ReadAttr(const std::string& attr_name, std::string* out)
     ::close(fd);
 
     // 去除尾部空白（sysfs 属性以 '\n' 结尾）。
-    while (!out->empty() &&
-           (out->back() == '\n' || out->back() == '\r' || out->back() == ' ' ||
-            out->back() == '\t'))
+    while (!out->empty() && (out->back() == '\n' || out->back() == '\r' || out->back() == ' ' ||
+                             out->back() == '\t'))
     {
         out->pop_back();
     }
@@ -153,8 +149,8 @@ Status AdcClient::ReadRaw(int channel, std::int32_t* raw)
         return status;
     }
 
-    errno      = 0;
-    char*   end   = nullptr;
+    errno            = 0;
+    char*      end   = nullptr;
     const long value = std::strtol(text.c_str(), &end, 10);
     if (end == text.c_str() || *end != '\0' || errno == ERANGE)
     {
@@ -171,7 +167,7 @@ Status AdcClient::ReadScaled(int channel, float* value)
         return Status(StatusCode::kInvalidArgument, "value 指针为空");
     }
 
-    std::int32_t raw = 0;
+    std::int32_t raw    = 0;
     Status       status = ReadRaw(channel, &raw);
     if (!status.Ok())
     {
@@ -190,7 +186,7 @@ Status AdcClient::ReadScaled(int channel, float* value)
         return status;
     }
 
-    errno       = 0;
+    errno             = 0;
     char*       end   = nullptr;
     const float scale = std::strtof(scale_text.c_str(), &end);
     if (end == scale_text.c_str() || *end != '\0' || errno == ERANGE)
@@ -202,9 +198,6 @@ Status AdcClient::ReadScaled(int channel, float* value)
     return Status::MakeOk();
 }
 
-void AdcClient::Close()
-{
-    open_ = false;
-}
+void AdcClient::Close() { open_ = false; }
 
 }  // namespace animal_monitor

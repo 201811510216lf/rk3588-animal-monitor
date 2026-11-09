@@ -9,7 +9,8 @@ using animal_monitor::Gauge;
 using animal_monitor::Histogram;
 using animal_monitor::MetricsRegistry;
 
-namespace {
+namespace
+{
 
 AM_TEST(counter_increment_and_value)
 {
@@ -30,8 +31,8 @@ AM_TEST(gauge_set_and_value)
 
 AM_TEST(histogram_empty_snapshot)
 {
-    Histogram histogram(64);
-    const auto  snapshot = histogram.GetSnapshot();
+    Histogram  histogram(64);
+    const auto snapshot = histogram.GetSnapshot();
     AM_EXPECT_EQ(snapshot.count, 0u);
 }
 
@@ -81,7 +82,4 @@ AM_TEST(registry_returns_same_object_and_dumps)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

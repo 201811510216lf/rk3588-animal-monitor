@@ -9,7 +9,8 @@
 
 #include <cmath>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 AnomalyResult Evaluate(const AnomalyConfig& config, float value, std::uint32_t baseline_count,
                        float baseline_mean, float baseline_stddev)
@@ -37,7 +38,7 @@ AnomalyResult Evaluate(const AnomalyConfig& config, float value, std::uint32_t b
     // z-score 规则。stddev==0 时 z 记为 0，仅绝对阈值生效（无法区分偏差）。
     if (baseline_stddev > 0.0f)
     {
-        const float z = (value - baseline_mean) / baseline_stddev;
+        const float z  = (value - baseline_mean) / baseline_stddev;
         result.z_score = z;
         if (std::fabs(z) >= config.z_threshold)
         {

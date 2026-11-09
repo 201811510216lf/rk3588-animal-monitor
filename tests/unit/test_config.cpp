@@ -7,7 +7,8 @@
 using animal_monitor::config::ConfigLoader;
 using animal_monitor::config::ConfigValidator;
 
-namespace {
+namespace
+{
 
 const char* kValidConfig = R"(
 board_profile: generic-rk3588
@@ -75,7 +76,7 @@ app:
 AM_TEST(parse_valid_config)
 {
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(kValidConfig, &root);
+    const auto                          status = ConfigLoader::ParseString(kValidConfig, &root);
     AM_EXPECT(status.Ok());
     AM_EXPECT(root.IsMap());
 }
@@ -93,7 +94,7 @@ AM_TEST(validator_accepts_valid_config)
 
 AM_TEST(nested_map_and_sequence_round_trip)
 {
-    const std::string text = R"(
+    const std::string                   text = R"(
 streams:
   - name: camera0
     url: "rtsp://192.0.2.1/live/0"
@@ -127,7 +128,7 @@ retry:
 
 AM_TEST(sequence_of_scalars)
 {
-    const std::string text = R"(
+    const std::string                   text = R"(
 ports:
   - 8554
   - 8000
@@ -147,7 +148,7 @@ ports:
 
 AM_TEST(inline_comment_and_quoted_string)
 {
-    const std::string text = R"(
+    const std::string                   text = R"(
 name: "device #0"   # 行内注释
 path: /dev/video0
 )";
@@ -159,25 +160,25 @@ path: /dev/video0
 
 AM_TEST(duplicate_key_is_error)
 {
-    const std::string text = "a: 1\na: 2\n";
+    const std::string                   text = "a: 1\na: 2\n";
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(text, &root);
+    const auto                          status = ConfigLoader::ParseString(text, &root);
     AM_EXPECT(!status.Ok());
 }
 
 AM_TEST(tab_indentation_is_error)
 {
-    const std::string text = "a:\n\tb: 1\n";
+    const std::string                   text = "a:\n\tb: 1\n";
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(text, &root);
+    const auto                          status = ConfigLoader::ParseString(text, &root);
     AM_EXPECT(!status.Ok());
 }
 
 AM_TEST(content_under_scalar_is_error)
 {
-    const std::string text = "a: 1\n  b: 2\n";
+    const std::string                   text = "a: 1\n  b: 2\n";
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(text, &root);
+    const auto                          status = ConfigLoader::ParseString(text, &root);
     AM_EXPECT(!status.Ok());
 }
 
@@ -197,23 +198,20 @@ AM_TEST(validator_reports_missing_keys)
 
 AM_TEST(root_must_be_mapping)
 {
-    const std::string text = "- item1\n- item2\n";
+    const std::string                   text = "- item1\n- item2\n";
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(text, &root);
+    const auto                          status = ConfigLoader::ParseString(text, &root);
     AM_EXPECT(!status.Ok());
 }
 
 AM_TEST(unterminated_quote_is_error)
 {
-    const std::string text = "a: \"abc\n";
+    const std::string                   text = "a: \"abc\n";
     animal_monitor::config::ConfigValue root;
-    const auto status = ConfigLoader::ParseString(text, &root);
+    const auto                          status = ConfigLoader::ParseString(text, &root);
     AM_EXPECT(!status.Ok());
 }
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

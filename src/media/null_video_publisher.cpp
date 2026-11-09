@@ -1,6 +1,7 @@
 #include "animal_monitor/media/null_video_publisher.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 Status NullVideoPublisher::Initialize(const Config& config)
 {
@@ -8,8 +9,8 @@ Status NullVideoPublisher::Initialize(const Config& config)
     return Status::MakeOk();
 }
 
-Status NullVideoPublisher::FeedH264(const std::uint8_t* data, std::size_t size,
-                                    std::int64_t dts_ms, std::int64_t pts_ms)
+Status NullVideoPublisher::FeedH264(const std::uint8_t* data, std::size_t size, std::int64_t dts_ms,
+                                    std::int64_t pts_ms)
 {
     (void)dts_ms;
     (void)pts_ms;
@@ -22,9 +23,7 @@ Status NullVideoPublisher::FeedH264(const std::uint8_t* data, std::size_t size,
     return Status::MakeOk();
 }
 
-void NullVideoPublisher::Close()
-{
-}
+void NullVideoPublisher::Close() {}
 
 std::string NullVideoPublisher::RtspUrl() const
 {

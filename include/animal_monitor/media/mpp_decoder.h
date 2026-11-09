@@ -1,7 +1,8 @@
 // 文件名：include/animal_monitor/media/mpp_decoder.h
 // 状态：implemented（模板）/ hardware-blocked —— 未经目标板编译与实测（UNVERIFIED）
 // 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_{A,B}_*.md 审计结论重写；
-//       API 形状参考 A/B 的 mpp_decoder 与 .ref_audit_RKMediaProject（MppDecInstance），未逐行拷贝。
+//       API 形状参考 A/B 的 mpp_decoder 与
+//       .ref_audit_RKMediaProject（MppDecInstance），未逐行拷贝。
 // 修复的审计缺陷：
 //  - A/B#3 局部变量遮蔽成员 → 本类 pimpl 唯一持有 MPP 上下文，无遮蔽路径；
 //  - A/B#8 info-change 静默失败 → 全部返回 Status，绝不 break 吞错；
@@ -19,14 +20,15 @@
 #include "animal_monitor/media/video_encoder.h"  // VideoCodec
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // MPP 硬解配置。width/height 预留：当前实现以码流 SPS（info-change）为准，
 // 0 表示不预设（任务书：网络/文件输入源使用；V4L2 相机直出 NV12 时不需要解码器）。
 struct MppDecoderConfig
 {
-    VideoCodec    codec = VideoCodec::kH264;  // 输入码流类型：kH264 / kH265
-    std::uint32_t width = 0;
+    VideoCodec    codec  = VideoCodec::kH264;  // 输入码流类型：kH264 / kH265
+    std::uint32_t width  = 0;
     std::uint32_t height = 0;
 };
 
@@ -37,7 +39,7 @@ struct MppDecoderConfig
 // 线程安全：非线程安全，Decode/Reset 由同一线程调用（内部无共享并发状态）。
 class MppDecoder
 {
-  public:
+   public:
     MppDecoder();
     ~MppDecoder();
 
@@ -56,7 +58,7 @@ class MppDecoder
     // 重置解码器：清空内部帧缓存与 info-change 状态（断流重连后调用）。
     void Reset();
 
-  private:
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

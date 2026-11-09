@@ -16,7 +16,8 @@
 
 #include <cstdint>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 计算两字节数据的 CRC-8（多项式 0x131、初值 0、MSB 先）。
 std::uint8_t Htu21dCrc8(std::uint8_t value_msb, std::uint8_t value_lsb);

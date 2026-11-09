@@ -18,23 +18,24 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // /dev/watchdog 用户态客户端（写 '\0' 喂狗，写 'V' 魔术字关闭）。
 class WatchdogClient
 {
-  public:
+   public:
     // device_path：看门狗节点（默认 /dev/watchdog）；timeout_seconds：请求超时。
     explicit WatchdogClient(std::string device_path = "/dev/watchdog", int timeout_seconds = 10);
 
     // RAII：析构时执行魔术字关闭（前提是有守护接管，见头文件警告）。
     ~WatchdogClient();
 
-    WatchdogClient(const WatchdogClient&) = delete;
+    WatchdogClient(const WatchdogClient&)            = delete;
     WatchdogClient& operator=(const WatchdogClient&) = delete;
 
     // 打开节点（O_WRONLY | O_CLOEXEC），ioctl WDIOC_GETSUPPORT 记录身份
-    //（失败非致命），WDIOC_SETTIMEOUT 设置超时（失败致命，返回错误并关闭）。
+    // （失败非致命），WDIOC_SETTIMEOUT 设置超时（失败致命，返回错误并关闭）。
     Status Open();
 
     // 喂狗：写一个 '\0' 字节（watchdog core 标准语义）。
@@ -50,11 +51,11 @@ class WatchdogClient
     int                ActualTimeoutSeconds() const { return actual_timeout_; }
     const std::string& SupportInfo() const { return support_info_; }
 
-  private:
+   private:
     std::string device_path_;
     int         timeout_seconds_;
-    int         fd_              = -1;
-    int         actual_timeout_  = 0;
+    int         fd_             = -1;
+    int         actual_timeout_ = 0;
     std::string support_info_;  // WDIOC_GETSUPPORT 记录的 identity（诊断用）
 };
 

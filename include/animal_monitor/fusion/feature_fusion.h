@@ -23,14 +23,15 @@
 #include <string>
 #include <vector>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 // 一次行为事件（来自行为检测/跟踪模块）。
 struct BehaviorEvent
 {
     std::int64_t  monotonic_ns = 0;  // 单调时钟纳秒
     std::string   behavior;
-    std::uint32_t camera_id    = 0;
+    std::uint32_t camera_id = 0;
 };
 
 // 一次热像样本（按个体/ROI 汇总后的温度特征，NOT_CALIBRATED）。
@@ -44,13 +45,13 @@ struct ThermalSample
 // 行为-温度时间窗融合（纯逻辑，无外部依赖）。
 class FeatureFusion
 {
-  public:
+   public:
     // 单行为聚合结果。
     struct BehaviorStats
     {
         std::string   behavior;
-        std::uint32_t event_count   = 0;  // 窗口内该行为事件数
-        std::uint32_t thermal_count = 0;  // 去重后的热样本数
+        std::uint32_t event_count   = 0;     // 窗口内该行为事件数
+        std::uint32_t thermal_count = 0;     // 去重后的热样本数
         float         thermal_mean  = 0.0f;  // 热样本 mean_c 的均值；无样本为 0
         float         thermal_max   = 0.0f;  // 热样本 max_c 的最大值；无样本为 0
     };
@@ -66,13 +67,13 @@ class FeatureFusion
     // 无窗口内行为事件时返回空。
     std::vector<BehaviorStats> Snapshot(std::int64_t now_ns) const;
 
-  private:
-    const std::int64_t   window_ns_;
-    const std::uint32_t  max_events_;
+   private:
+    const std::int64_t        window_ns_;
+    const std::uint32_t       max_events_;
     std::deque<BehaviorEvent> events_;
     std::deque<ThermalSample> samples_;
-    std::int64_t latest_ns_ = 0;  // 最新见到的样本时间戳（Add 时淘汰参考）
-    bool         has_latest_ = false;
+    std::int64_t              latest_ns_  = 0;  // 最新见到的样本时间戳（Add 时淘汰参考）
+    bool                      has_latest_ = false;
 };
 
 }  // namespace animal_monitor::fusion

@@ -1,15 +1,17 @@
 // ============================================================================
 // 文件：src/calibration/temperature_calibrator.cpp
 // 状态：implemented（纯数学，host 可编译；MSVC /W4 /permissive- 零告警）
-// 依据：任务书 CODEX_MASTER_TASK.md §10；include/animal_monitor/calibration/temperature_calibrator.h
-// 说明：最小二乘使用 double 累加以减小截断误差；拟合结果不代表真实标定（NOT_CALIBRATED）。
+// 依据：任务书 CODEX_MASTER_TASK.md
+// §10；include/animal_monitor/calibration/temperature_calibrator.h 说明：最小二乘使用 double
+// 累加以减小截断误差；拟合结果不代表真实标定（NOT_CALIBRATED）。
 // ============================================================================
 
 #include "animal_monitor/calibration/temperature_calibrator.h"
 
 #include <cmath>
 
-namespace animal_monitor::calibration {
+namespace animal_monitor::calibration
+{
 
 float ApplyCalibration(float raw_c, const LinearCalibration& cal)
 {
@@ -17,7 +19,7 @@ float ApplyCalibration(float raw_c, const LinearCalibration& cal)
 }
 
 Status FitCalibrationFromPairs(const std::vector<std::pair<float, float>>& reference_pairs,
-                               LinearCalibration* out)
+                               LinearCalibration*                          out)
 {
     if (out == nullptr)
     {
@@ -29,11 +31,11 @@ Status FitCalibrationFromPairs(const std::vector<std::pair<float, float>>& refer
     }
 
     // 模型 ref = gain * raw + offset；令 x = raw（原始读数）、y = ref（参考温度）。
-    double    sum_x  = 0.0;
-    double    sum_y  = 0.0;
-    double    sum_xy = 0.0;
-    double    sum_xx = 0.0;
-    const std::size_t n = reference_pairs.size();
+    double            sum_x  = 0.0;
+    double            sum_y  = 0.0;
+    double            sum_xy = 0.0;
+    double            sum_xx = 0.0;
+    const std::size_t n      = reference_pairs.size();
     for (const auto& pair : reference_pairs)
     {
         const float ref = pair.first;
@@ -60,12 +62,12 @@ Status FitCalibrationFromPairs(const std::vector<std::pair<float, float>>& refer
     result.gain     = static_cast<float>((static_cast<double>(n) * sum_xy - sum_x * sum_y) / denom);
     result.offset_c = static_cast<float>((sum_y - static_cast<double>(result.gain) * sum_x) /
                                          static_cast<double>(n));
-    *out = result;
+    *out            = result;
     return Status::MakeOk();
 }
 
 CalibrationQuality EvaluateCalibration(const std::vector<std::pair<float, float>>& reference_pairs,
-                                       const LinearCalibration& cal)
+                                       const LinearCalibration&                    cal)
 {
     CalibrationQuality quality;
     const std::size_t  n = reference_pairs.size();

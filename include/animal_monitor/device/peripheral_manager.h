@@ -12,7 +12,8 @@
 #include <mutex>
 #include <string>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 外设状态枚举。kHardwareBlocked 表示代码就绪但缺少板卡/驱动验证。
 enum class PeripheralState
@@ -40,10 +41,10 @@ struct PeripheralStatus
 // SetState 对未注册名称自动隐式注册（便于按状态直接上报，文档化行为）。
 class PeripheralManager
 {
-  public:
+   public:
     PeripheralManager() = default;
 
-    PeripheralManager(const PeripheralManager&) = delete;
+    PeripheralManager(const PeripheralManager&)            = delete;
     PeripheralManager& operator=(const PeripheralManager&) = delete;
 
     // 注册外设（已存在则幂等，不覆盖当前状态）。
@@ -63,8 +64,8 @@ class PeripheralManager
     // 已注册外设数量。
     std::size_t Count() const;
 
-  private:
-    mutable std::mutex                  mutex_;
+   private:
+    mutable std::mutex                      mutex_;
     std::map<std::string, PeripheralStatus> registry_;
 };
 

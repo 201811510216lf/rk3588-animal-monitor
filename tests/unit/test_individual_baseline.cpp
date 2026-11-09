@@ -15,12 +15,10 @@
 
 using animal_monitor::fusion::IndividualBaseline;
 
-namespace {
-
-bool Near(float a, float b)
+namespace
 {
-    return std::fabs(a - b) <= 1e-4f;
-}
+
+bool Near(float a, float b) { return std::fabs(a - b) <= 1e-4f; }
 
 AM_TEST(window_stats_known_values)
 {
@@ -95,8 +93,8 @@ AM_TEST(nonfinite_sample_ignored)
     IndividualBaseline baseline(8);
     baseline.AddSample(1, 5.0f);
     baseline.AddSample(1, std::numeric_limits<float>::quiet_NaN());
-    std::uint32_t count = 0;
-    float         mean  = 0.0f;
+    std::uint32_t count  = 0;
+    float         mean   = 0.0f;
     float         stddev = 0.0f;
     AM_EXPECT(baseline.GetStats(1, &count, &mean, &stddev));
     AM_EXPECT_EQ(count, 1u);
@@ -128,8 +126,8 @@ AM_TEST(ctor_clamps_zero_window)
     baseline.AddSample(1, 1.0f);
     baseline.AddSample(1, 2.0f);
     baseline.AddSample(1, 3.0f);
-    std::uint32_t count = 0;
-    float         mean  = 0.0f;
+    std::uint32_t count  = 0;
+    float         mean   = 0.0f;
     float         stddev = 0.0f;
     AM_EXPECT(baseline.GetStats(1, &count, &mean, &stddev));
     AM_EXPECT_EQ(count, 1u);
@@ -138,7 +136,4 @@ AM_TEST(ctor_clamps_zero_window)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

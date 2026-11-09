@@ -1,6 +1,7 @@
 // 文件名：src/camera/v4l2_camera.cpp
 // 状态：implemented（模板）/ hardware-blocked —— 未经目标板编译与实测（UNVERIFIED）
-// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md 审计结论重写；
+// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md
+// 审计结论重写；
 //       API 形状参考 .ref_audit_RKMediaProject/src/v4l2Camera.cpp（只读审计），未逐行拷贝。
 // 修复的参考实现缺陷：
 //  - 错误路径统一回滚（无 goto 标签、无未检查返回值）；
@@ -34,13 +35,15 @@
 #include "animal_monitor/common/bounded_queue.h"
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
-constexpr int kIoctlRetryLimit    = 4;    // EINTR 重试上限
-constexpr int kPollTimeoutMs      = 250;  // 采集线程 poll 周期（兼顾停止响应速度）
-constexpr auto kQueuePushTimeout  = std::chrono::milliseconds(50);
+constexpr int  kIoctlRetryLimit  = 4;    // EINTR 重试上限
+constexpr int  kPollTimeoutMs    = 250;  // 采集线程 poll 周期（兼顾停止响应速度）
+constexpr auto kQueuePushTimeout = std::chrono::milliseconds(50);
 
 // V4L2 ioctl 封装：EINTR 自动重试（任务书要求），其余错误原样返回。
 int Xioctl(int fd, unsigned long request, void* arg)
@@ -62,9 +65,12 @@ std::uint32_t ToV4l2PixelFormat(PixelFormat format)
 {
     switch (format)
     {
-        case PixelFormat::kMjpeg: return V4L2_PIX_FMT_MJPEG;
-        case PixelFormat::kNv12:  return V4L2_PIX_FMT_NV12;
-        default:                  return 0;
+        case PixelFormat::kMjpeg:
+            return V4L2_PIX_FMT_MJPEG;
+        case PixelFormat::kNv12:
+            return V4L2_PIX_FMT_NV12;
+        default:
+            return 0;
     }
 }
 
@@ -96,13 +102,13 @@ std::uint32_t AlignUp(std::uint32_t value, std::uint32_t alignment)
 // 采集实现全部隐藏在 Impl 中；V4L2 类型不出现在公开头。
 class V4l2Camera::Impl
 {
-  public:
+   public:
     // 缓冲归还通道：FrameOwner 通过 shared_ptr 持有；
     // 相机 Stop/析构后置 valid=false，残留帧析构时跳过 QBUF（fd 已关闭）。
     struct RequeueChannel
     {
-        int            fd    = -1;
-        bool           valid = false;
+        int                fd    = -1;
+        bool               valid = false;
         mutable std::mutex mutex;
     };
 
@@ -110,28 +116,27 @@ class V4l2Camera::Impl
     struct PoolSlot
     {
         std::shared_ptr<DmaBuffer> buffer;
-        std::uint32_t               index = 0;
+        std::uint32_t              index = 0;
     };
 
     // 帧所有权：析构 = SYNC_END(READ) + QBUF 归还。
     // 只要 VideoFramePtr 仍被下游持有，缓冲就不会回池（buffer_lifecycle.md 契约）。
     class FrameOwner : public FdBufferOwner
     {
-      public:
+       public:
         FrameOwner(std::shared_ptr<PoolSlot> slot, std::shared_ptr<RequeueChannel> channel)
             : slot_(std::move(slot)), channel_(std::move(channel))
-        {
-        }
+        {}
 
         ~FrameOwner() override { Release(); }
 
-        int         Fd() const override { return slot_ && slot_->buffer ? slot_->buffer->Fd() : -1; }
+        int Fd() const override { return slot_ && slot_->buffer ? slot_->buffer->Fd() : -1; }
         std::size_t Size() const override
         {
             return slot_ && slot_->buffer ? slot_->buffer->Size() : 0;
         }
 
-      private:
+       private:
         void Release()
         {
             if (!slot_ || !slot_->buffer || !channel_)
@@ -160,8 +165,8 @@ class V4l2Camera::Impl
             }
         }
 
-        std::shared_ptr<PoolSlot>         slot_;
-        std::shared_ptr<RequeueChannel>   channel_;
+        std::shared_ptr<PoolSlot>       slot_;
+        std::shared_ptr<RequeueChannel> channel_;
     };
 
     explicit Impl(V4l2CameraConfig config)
@@ -175,9 +180,8 @@ class V4l2Camera::Impl
         nominal_meta_.width  = config_.width;
         nominal_meta_.height = config_.height;
         nominal_meta_.format = config_.pixel_format;
-        nominal_meta_.stride = (config_.pixel_format == PixelFormat::kNv12)
-                                   ? AlignUp(config_.width, 16u)
-                                   : 0u;
+        nominal_meta_.stride =
+            (config_.pixel_format == PixelFormat::kNv12) ? AlignUp(config_.width, 16u) : 0u;
     }
 
     ~Impl() { Stop(); }
@@ -203,8 +207,7 @@ class V4l2Camera::Impl
         fd_ = ::open(config_.device.c_str(), O_RDWR | O_CLOEXEC);
         if (fd_ < 0)
         {
-            AM_LOG_ERROR() << "[V4L2] 打开 " << config_.device << " 失败: "
-                           << std::strerror(errno);
+            AM_LOG_ERROR() << "[V4L2] 打开 " << config_.device << " 失败: " << std::strerror(errno);
             return Status(StatusCode::kHardwareUnavailable,
                           "[V4L2] 打开设备失败: " + config_.device);
         }
@@ -291,7 +294,7 @@ class V4l2Camera::Impl
         return Status(StatusCode::kTimeout, "[V4L2] 取帧超时");
     }
 
-  private:
+   private:
     Status ValidateConfig() const
     {
         if (config_.device.empty())
@@ -335,7 +338,7 @@ class V4l2Camera::Impl
         }
 
         const std::uint32_t requested_fourcc = ToV4l2PixelFormat(config_.pixel_format);
-        v4l2_format format{};
+        v4l2_format         format{};
         format.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         format.fmt.pix.width       = config_.width;
         format.fmt.pix.height      = config_.height;
@@ -364,10 +367,10 @@ class V4l2Camera::Impl
             return Status(StatusCode::kHardwareUnavailable, "[V4L2] 驱动返回非法分辨率");
         }
 
-        active_width_       = active.fmt.pix.width;
-        active_height_      = active.fmt.pix.height;
-        active_stride_      = active.fmt.pix.bytesperline;
-        active_sizeimage_   = active.fmt.pix.sizeimage;
+        active_width_     = active.fmt.pix.width;
+        active_height_    = active.fmt.pix.height;
+        active_stride_    = active.fmt.pix.bytesperline;
+        active_sizeimage_ = active.fmt.pix.sizeimage;
         if (active_stride_ == 0)
         {
             active_stride_ = (config_.pixel_format == PixelFormat::kNv12)
@@ -446,35 +449,33 @@ class V4l2Camera::Impl
 
         // 单帧容量：以 sizeimage 为准，并对 MJPEG/NV12 设置合理下限，防止驱动
         // 报告的 sizeimage 过小导致溢出（参考实现缺陷：sizeimage 为 0 时直接使用）。
-        const std::size_t minimum = (config_.pixel_format == PixelFormat::kNv12)
-                                        ? static_cast<std::size_t>(active_stride_) *
-                                              active_height_ * 3u / 2u
-                                        : static_cast<std::size_t>(active_width_) *
-                                              active_height_ * 3u;
-        const std::size_t frame_size =
-            std::max<std::size_t>(active_sizeimage_, minimum);
+        const std::size_t minimum =
+            (config_.pixel_format == PixelFormat::kNv12)
+                ? static_cast<std::size_t>(active_stride_) * active_height_ * 3u / 2u
+                : static_cast<std::size_t>(active_width_) * active_height_ * 3u;
+        const std::size_t frame_size = std::max<std::size_t>(active_sizeimage_, minimum);
         if (frame_size == 0)
         {
             return Status(StatusCode::kHardwareUnavailable, "[V4L2] 帧缓冲大小为 0");
         }
 
-        channel_ = std::make_shared<RequeueChannel>();
+        channel_        = std::make_shared<RequeueChannel>();
         channel_->fd    = fd_;
         channel_->valid = true;
         slots_.clear();
         slots_.reserve(request.count);
         for (std::uint32_t i = 0; i < request.count; ++i)
         {
-            auto buffer = std::make_shared<DmaBuffer>();
+            auto         buffer = std::make_shared<DmaBuffer>();
             const Status status = allocator_.Allocate(frame_size, buffer.get());
             if (!status)
             {
                 TeardownDevice();
                 return status;
             }
-            auto slot        = std::make_shared<PoolSlot>();
-            slot->buffer     = std::move(buffer);
-            slot->index      = i;
+            auto slot    = std::make_shared<PoolSlot>();
+            slot->buffer = std::move(buffer);
+            slot->index  = i;
             slots_.push_back(std::move(slot));
         }
 
@@ -488,10 +489,10 @@ class V4l2Camera::Impl
             buffer.length = static_cast<__u32>(slot->buffer->Size());
             if (Xioctl(fd_, VIDIOC_QBUF, &buffer) < 0)
             {
-                const Status status = Status(
-                    StatusCode::kHardwareUnavailable,
-                    std::string("[V4L2] QBUF index=") + std::to_string(slot->index) +
-                        " 失败: " + std::strerror(errno));
+                const Status status =
+                    Status(StatusCode::kHardwareUnavailable, std::string("[V4L2] QBUF index=") +
+                                                                 std::to_string(slot->index) +
+                                                                 " 失败: " + std::strerror(errno));
                 TeardownDevice();
                 return status;
             }
@@ -522,9 +523,9 @@ class V4l2Camera::Impl
         query.id = V4L2_CID_EXPOSURE_ABSOLUTE;
         if (Xioctl(fd_, VIDIOC_QUERYCTRL, &query) < 0)
         {
-            return Status(StatusCode::kHardwareUnavailable,
-                          std::string("[V4L2] QUERYCTRL(EXPOSURE_ABSOLUTE) 失败: ") +
-                              std::strerror(errno));
+            return Status(
+                StatusCode::kHardwareUnavailable,
+                std::string("[V4L2] QUERYCTRL(EXPOSURE_ABSOLUTE) 失败: ") + std::strerror(errno));
         }
         if (query.flags & V4L2_CTRL_FLAG_DISABLED)
         {
@@ -535,9 +536,8 @@ class V4l2Camera::Impl
         if (exposure_100us < query.minimum || exposure_100us > query.maximum)
         {
             return Status(StatusCode::kInvalidArgument,
-                          "[V4L2] 曝光值超出驱动支持范围 [" +
-                              std::to_string(query.minimum / 10) + ", " +
-                              std::to_string(query.maximum / 10) + "] ms");
+                          "[V4L2] 曝光值超出驱动支持范围 [" + std::to_string(query.minimum / 10) +
+                              ", " + std::to_string(query.maximum / 10) + "] ms");
         }
 
         v4l2_control mode_ctrl{};
@@ -607,8 +607,8 @@ class V4l2Camera::Impl
         while (!stop_requested_.load(std::memory_order_relaxed))
         {
             pollfd pfd{};
-            pfd.fd     = fd_;
-            pfd.events = POLLIN | POLLPRI;
+            pfd.fd             = fd_;
+            pfd.events         = POLLIN | POLLPRI;
             const int poll_ret = ::poll(&pfd, 1, kPollTimeoutMs);
             if (poll_ret == 0)
             {
@@ -625,8 +625,8 @@ class V4l2Camera::Impl
             }
             if ((pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
             {
-                AM_LOG_ERROR() << "[V4L2] poll 报告设备异常 revents=0x" << std::hex
-                               << pfd.revents << std::dec;
+                AM_LOG_ERROR() << "[V4L2] poll 报告设备异常 revents=0x" << std::hex << pfd.revents
+                               << std::dec;
                 break;
             }
             if ((pfd.revents & (POLLIN | POLLPRI)) == 0)
@@ -660,9 +660,9 @@ class V4l2Camera::Impl
                 AM_LOG_WARNING() << sync_status.Message();
             }
 
-            VideoFramePtr frame = std::make_shared<VideoFrame>();
-            frame->meta          = nominal_meta_;
-            frame->meta.id.sequence = sequence_.fetch_add(1, std::memory_order_relaxed);
+            VideoFramePtr frame          = std::make_shared<VideoFrame>();
+            frame->meta                  = nominal_meta_;
+            frame->meta.id.sequence      = sequence_.fetch_add(1, std::memory_order_relaxed);
             const std::int64_t sensor_ns = TimevalToNanoseconds(buffer.timestamp);
             frame->meta.timestamps.monotonic_ns =
                 sensor_ns > 0 ? sensor_ns : NowNanoseconds(CLOCK_MONOTONIC);
@@ -670,20 +670,18 @@ class V4l2Camera::Impl
 
             if (config_.pixel_format == PixelFormat::kNv12)
             {
-                const std::uint8_t* base  = slot->buffer->ByteAddress();
-                const std::size_t   total = static_cast<std::size_t>(active_stride_) *
-                                            active_height_ * 3u / 2u;
+                const std::uint8_t* base = slot->buffer->ByteAddress();
+                const std::size_t   total =
+                    static_cast<std::size_t>(active_stride_) * active_height_ * 3u / 2u;
                 PlaneView y_plane;
                 y_plane.data       = base;
                 y_plane.size       = total;
                 y_plane.row_stride = active_stride_;
                 PlaneView uv_plane;
-                uv_plane.data       = base + static_cast<std::size_t>(active_stride_) *
-                                              active_height_;
-                uv_plane.size       = static_cast<std::size_t>(active_stride_) *
-                                      active_height_ / 2u;
+                uv_plane.data = base + static_cast<std::size_t>(active_stride_) * active_height_;
+                uv_plane.size = static_cast<std::size_t>(active_stride_) * active_height_ / 2u;
                 uv_plane.row_stride = active_stride_;
-                frame->planes = {y_plane, uv_plane};
+                frame->planes       = {y_plane, uv_plane};
             }
             else
             {
@@ -711,52 +709,38 @@ class V4l2Camera::Impl
         stop_requested_.store(true, std::memory_order_relaxed);
     }
 
-    V4l2CameraConfig          config_;
-    std::string               name_;
-    FrameMeta                 nominal_meta_;
-    DmaHeapAllocator          allocator_;
+    V4l2CameraConfig            config_;
+    std::string                 name_;
+    FrameMeta                   nominal_meta_;
+    DmaHeapAllocator            allocator_;
     BoundedQueue<VideoFramePtr> queue_;
-    std::thread               capture_thread_;
-    std::mutex                state_mutex_;
-    std::atomic<bool>         stop_requested_{false};
-    std::atomic<std::uint64_t> sequence_{0};
+    std::thread                 capture_thread_;
+    std::mutex                  state_mutex_;
+    std::atomic<bool>           stop_requested_{false};
+    std::atomic<std::uint64_t>  sequence_{0};
 
-    int                       fd_              = -1;
-    bool                      stream_on_       = false;
-    std::uint32_t             active_width_    = 0;
-    std::uint32_t             active_height_   = 0;
-    std::uint32_t             active_stride_   = 0;
-    std::uint32_t             active_sizeimage_ = 0;
+    int                                    fd_               = -1;
+    bool                                   stream_on_        = false;
+    std::uint32_t                          active_width_     = 0;
+    std::uint32_t                          active_height_    = 0;
+    std::uint32_t                          active_stride_    = 0;
+    std::uint32_t                          active_sizeimage_ = 0;
     std::vector<std::shared_ptr<PoolSlot>> slots_;
     std::shared_ptr<RequeueChannel>        channel_;
 };
 
-V4l2Camera::V4l2Camera(V4l2CameraConfig config)
-    : impl_(std::make_unique<Impl>(std::move(config)))
-{
-}
+V4l2Camera::V4l2Camera(V4l2CameraConfig config) : impl_(std::make_unique<Impl>(std::move(config)))
+{}
 
 V4l2Camera::~V4l2Camera() = default;
 
-const char* V4l2Camera::Name() const
-{
-    return impl_->Name();
-}
+const char* V4l2Camera::Name() const { return impl_->Name(); }
 
-const FrameMeta& V4l2Camera::NominalMeta() const
-{
-    return impl_->NominalMeta();
-}
+const FrameMeta& V4l2Camera::NominalMeta() const { return impl_->NominalMeta(); }
 
-Status V4l2Camera::Start()
-{
-    return impl_->Start();
-}
+Status V4l2Camera::Start() { return impl_->Start(); }
 
-void V4l2Camera::Stop()
-{
-    impl_->Stop();
-}
+void V4l2Camera::Stop() { impl_->Stop(); }
 
 Status V4l2Camera::WaitForFrame(VideoFramePtr* out, std::chrono::milliseconds timeout)
 {

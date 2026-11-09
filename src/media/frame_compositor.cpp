@@ -4,10 +4,10 @@
 #include <cstring>
 #include <utility>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-Status ComputeTileRects(const CompositorConfig& config, int num_sources,
-                        std::vector<TileRect>* out)
+Status ComputeTileRects(const CompositorConfig& config, int num_sources, std::vector<TileRect>* out)
 {
     if (out == nullptr)
     {
@@ -22,8 +22,7 @@ Status ComputeTileRects(const CompositorConfig& config, int num_sources,
         return Status(StatusCode::kInvalidArgument, "output size must be non-zero");
     }
 
-    const std::uint32_t gap_total =
-        static_cast<std::uint32_t>(num_sources - 1) * config.gap_px;
+    const std::uint32_t gap_total = static_cast<std::uint32_t>(num_sources - 1) * config.gap_px;
     if (config.layout == CompositorLayout::kSideBySide)
     {
         if (gap_total >= config.out_width)
@@ -63,9 +62,7 @@ Status ComputeTileRects(const CompositorConfig& config, int num_sources,
     return Status::MakeOk();
 }
 
-FrameCompositor::FrameCompositor(CompositorConfig config) : config_(config)
-{
-}
+FrameCompositor::FrameCompositor(CompositorConfig config) : config_(config) {}
 
 Status FrameCompositor::Compose(const std::vector<VideoFramePtr>& inputs, VideoFramePtr* out)
 {
@@ -87,19 +84,18 @@ Status FrameCompositor::Compose(const std::vector<VideoFramePtr>& inputs, VideoF
     }
 
     // 输出画布：黑色填充（gap 与未覆盖区域）。
-    const std::size_t out_bytes = static_cast<std::size_t>(config_.out_width) *
-                                  config_.out_height * 3;
-    auto canvas = std::make_shared<VideoFrame>(FrameMeta{});
-    auto heap   = std::make_shared<HeapBuffer>(std::vector<std::uint8_t>(out_bytes, 0));
+    const std::size_t out_bytes =
+        static_cast<std::size_t>(config_.out_width) * config_.out_height * 3;
+    auto canvas   = std::make_shared<VideoFrame>(FrameMeta{});
+    auto heap     = std::make_shared<HeapBuffer>(std::vector<std::uint8_t>(out_bytes, 0));
     canvas->owner = heap;
-    canvas->planes.push_back(
-        PlaneView{heap->Bytes().data(), out_bytes, config_.out_width * 3});
-    canvas->meta.width  = config_.out_width;
-    canvas->meta.height = config_.out_height;
-    canvas->meta.stride = config_.out_width * 3;
-    canvas->meta.format = PixelFormat::kBgr888;
-    canvas->meta.id.camera_id  = 0xFFFFFFFFu;  // 合成帧无单一相机来源
-    canvas->meta.id.sequence   = 0;
+    canvas->planes.push_back(PlaneView{heap->Bytes().data(), out_bytes, config_.out_width * 3});
+    canvas->meta.width                   = config_.out_width;
+    canvas->meta.height                  = config_.out_height;
+    canvas->meta.stride                  = config_.out_width * 3;
+    canvas->meta.format                  = PixelFormat::kBgr888;
+    canvas->meta.id.camera_id            = 0xFFFFFFFFu;  // 合成帧无单一相机来源
+    canvas->meta.id.sequence             = 0;
     canvas->meta.timestamps.monotonic_ns = 0;
 
     std::uint8_t* canvas_data = heap->Bytes().data();
@@ -114,16 +110,15 @@ Status FrameCompositor::Compose(const std::vector<VideoFramePtr>& inputs, VideoF
         }
         if (input->meta.format != PixelFormat::kBgr888)
         {
-            return Status(StatusCode::kUnimplemented,
-                          "CPU compositor accepts BGR888 inputs only");
+            return Status(StatusCode::kUnimplemented, "CPU compositor accepts BGR888 inputs only");
         }
 
-        const std::uint32_t src_w  = input->meta.width;
-        const std::uint32_t src_h  = input->meta.height;
+        const std::uint32_t src_w = input->meta.width;
+        const std::uint32_t src_h = input->meta.height;
         const std::uint32_t src_stride =
-            input->planes[0].row_stride != 0 ? input->planes[0].row_stride
-                                             : (input->meta.stride != 0 ? input->meta.stride
-                                                                        : src_w * 3);
+            input->planes[0].row_stride != 0
+                ? input->planes[0].row_stride
+                : (input->meta.stride != 0 ? input->meta.stride : src_w * 3);
         if (src_w == 0 || src_h == 0)
         {
             return Status(StatusCode::kInvalidArgument, "input frame has zero size");
@@ -133,15 +128,16 @@ Status FrameCompositor::Compose(const std::vector<VideoFramePtr>& inputs, VideoF
         // 最近邻缩放写入 tile（CPU 演示路径；目标板由 RGA 完成）。
         for (std::uint32_t dy = 0; dy < rect.h; ++dy)
         {
-            const std::uint32_t sy = static_cast<std::uint32_t>(
-                static_cast<std::uint64_t>(dy) * src_h / rect.h);
-            std::uint8_t* dst_row = canvas_data + (static_cast<std::size_t>(rect.y + dy) *
-                                                   config_.out_width + rect.x) * 3;
+            const std::uint32_t sy =
+                static_cast<std::uint32_t>(static_cast<std::uint64_t>(dy) * src_h / rect.h);
+            std::uint8_t* dst_row =
+                canvas_data +
+                (static_cast<std::size_t>(rect.y + dy) * config_.out_width + rect.x) * 3;
             const std::uint8_t* src_row = src_data + static_cast<std::size_t>(sy) * src_stride;
             for (std::uint32_t dx = 0; dx < rect.w; ++dx)
             {
-                const std::uint32_t sx = static_cast<std::uint32_t>(
-                    static_cast<std::uint64_t>(dx) * src_w / rect.w);
+                const std::uint32_t sx =
+                    static_cast<std::uint32_t>(static_cast<std::uint64_t>(dx) * src_w / rect.w);
                 dst_row[dx * 3 + 0] = src_row[sx * 3 + 0];
                 dst_row[dx * 3 + 1] = src_row[sx * 3 + 1];
                 dst_row[dx * 3 + 2] = src_row[sx * 3 + 2];

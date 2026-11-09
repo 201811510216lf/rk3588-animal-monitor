@@ -17,7 +17,8 @@ using animal_monitor::Sha256Hex;
 using animal_monitor::Status;
 using animal_monitor::StatusCode;
 
-namespace {
+namespace
+{
 
 AM_TEST(empty_string_vector)
 {

@@ -2,11 +2,10 @@
 
 #include <cstdlib>
 
-namespace animal_monitor {
-
-TimestampAligner::TimestampAligner(std::int64_t tolerance_ns) : tolerance_ns_(tolerance_ns)
+namespace animal_monitor
 {
-}
+
+TimestampAligner::TimestampAligner(std::int64_t tolerance_ns) : tolerance_ns_(tolerance_ns) {}
 
 std::optional<AlignedPair> TimestampAligner::AddSample(int source_id, std::int64_t timestamp_ns)
 {

@@ -17,7 +17,8 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/communication/modbus_rtu.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // Modbus RTU 校验位（termios 支持范围内）。
 enum class Rs485Parity
@@ -34,7 +35,7 @@ enum class Rs485Parity
 // 记录到 LastRs485Warning()。
 class Rs485ModbusClient
 {
-  public:
+   public:
     // tty_path：串口节点（如 "/dev/ttyS1"）；baud：标准波特率（1200..230400）；
     // parity：校验位；timeout_ms：每段读取超时（毫秒，>0）。
     Rs485ModbusClient(std::string tty_path, int baud, Rs485Parity parity, int timeout_ms);
@@ -42,7 +43,7 @@ class Rs485ModbusClient
     // RAII：析构时关闭串口。
     ~Rs485ModbusClient();
 
-    Rs485ModbusClient(const Rs485ModbusClient&) = delete;
+    Rs485ModbusClient(const Rs485ModbusClient&)            = delete;
     Rs485ModbusClient& operator=(const Rs485ModbusClient&) = delete;
 
     Status Open();
@@ -60,7 +61,7 @@ class Rs485ModbusClient
     bool               IsOpen() const { return fd_ >= 0; }
     const std::string& LastRs485Warning() const { return rs485_warning_; }
 
-  private:
+   private:
     // 从 fd_ 读满 count 字节（逐段 poll + read），返回 kTimeout 表示超时。
     Status ReadExactly(std::vector<std::uint8_t>* out, std::size_t count);
 
@@ -68,7 +69,7 @@ class Rs485ModbusClient
     int         baud_;
     Rs485Parity parity_;
     int         timeout_ms_;
-    int         fd_             = -1;
+    int         fd_ = -1;
     std::string rs485_warning_;  // TIOCSRS485 失败等非致命告警（诊断用）
 };
 

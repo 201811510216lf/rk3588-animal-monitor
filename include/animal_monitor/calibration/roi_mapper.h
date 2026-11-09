@@ -20,7 +20,8 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/config/config_loader.h"
 
-namespace animal_monitor::calibration {
+namespace animal_monitor::calibration
+{
 
 // RGB(相机像素) → 热图(32x24) 仿射映射参数。
 // 工程近似，未经标定实验验证（NOT_CALIBRATED / UNVERIFIED）。

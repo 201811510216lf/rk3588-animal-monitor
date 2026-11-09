@@ -1,7 +1,8 @@
 // 文件名：include/animal_monitor/media/mpp_encoder.h
 // 状态：implemented（模板）/ hardware-blocked —— 未经目标板编译与实测（UNVERIFIED）
 // 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_B_*.md 审计结论重写；
-//       API 形状参考 B lib/mpp_encoder.cpp 与 .ref_audit_RKMediaProject（MppEncInstance），未逐行拷贝。
+//       API 形状参考 B lib/mpp_encoder.cpp 与
+//       .ref_audit_RKMediaProject（MppEncInstance），未逐行拷贝。
 // 修复的审计缺陷：
 //  - B#14 输入 stride 未 16 对齐 → 内部统一 16 对齐（config.hor_stride 传入时按 16 向上取整）；
 //  - B#20 每帧 new 大缓冲不复用 → 常驻内部 DRM 缓冲池，缓冲复用；
@@ -16,7 +17,8 @@
 
 #include "animal_monitor/media/video_encoder.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // MPP 硬件编码器（H.264/H.265）。
 // 配置：CBR、GOP、split=NONE、HEADER_MODE=EACH_IDR（每个 IDR 带 SPS/PPS）。
@@ -26,7 +28,7 @@ namespace animal_monitor {
 // Close() 可由其他线程调用以解除 GetPacket 的阻塞等待（幂等）。
 class MppEncoder : public VideoEncoder
 {
-  public:
+   public:
     MppEncoder();
     ~MppEncoder() override;
 
@@ -48,7 +50,7 @@ class MppEncoder : public VideoEncoder
     // 解除 GetPacket/Encode 的阻塞等待（幂等；析构自动调用）。
     void Close();
 
-  private:
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

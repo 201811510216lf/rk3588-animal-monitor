@@ -2,7 +2,8 @@
 
 #include <cstdlib>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 FrameSynchronizer::FrameSynchronizer(Config config)
     : config_(config),
@@ -10,8 +11,7 @@ FrameSynchronizer::FrameSynchronizer(Config config)
                                          BoundedQueue<VideoFramePtr>::PushPolicy::kDropOldest),
              BoundedQueue<VideoFramePtr>(config.queue_capacity,
                                          BoundedQueue<VideoFramePtr>::PushPolicy::kDropOldest)}
-{
-}
+{}
 
 bool FrameSynchronizer::PushFrame(int camera_id, VideoFramePtr frame)
 {
@@ -58,9 +58,8 @@ Status FrameSynchronizer::PopPair(VideoFramePtr* left, VideoFramePtr* right,
 
     while (true)
     {
-        const auto remaining =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                deadline - std::chrono::steady_clock::now());
+        const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+            deadline - std::chrono::steady_clock::now());
         if (remaining.count() <= 0)
         {
             std::lock_guard<std::mutex> lock(metrics_mutex_);

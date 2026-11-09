@@ -11,7 +11,8 @@
 #include <mutex>
 #include <string>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 const char* PeripheralStateName(PeripheralState state)
 {
@@ -41,12 +42,12 @@ void PeripheralManager::SetState(const std::string& name, PeripheralState state,
                                  const std::string& message)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto it = registry_.find(name);
+    auto                        it = registry_.find(name);
     if (it == registry_.end())
     {
         // 未注册名称隐式注册（文档化行为），避免状态更新被静默丢弃。
-        it = registry_.emplace(name, PeripheralStatus{name, PeripheralState::kUnknown,
-                                                      std::string()})
+        it = registry_
+                 .emplace(name, PeripheralStatus{name, PeripheralState::kUnknown, std::string()})
                  .first;
     }
     it->second.state   = state;
@@ -56,7 +57,7 @@ void PeripheralManager::SetState(const std::string& name, PeripheralState state,
 const PeripheralStatus* PeripheralManager::Find(const std::string& name) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    const auto it = registry_.find(name);
+    const auto                  it = registry_.find(name);
     return it == registry_.end() ? nullptr : &it->second;
 }
 

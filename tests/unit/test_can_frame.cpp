@@ -16,7 +16,8 @@ using animal_monitor::kMaxCanDlc;
 using animal_monitor::ToString;
 using animal_monitor::ValidateDlc;
 
-namespace {
+namespace
+{
 
 AM_TEST(dlc_validation_boundaries)
 {
@@ -73,7 +74,4 @@ AM_TEST(to_string_defensive_clamp_on_invalid_dlc)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

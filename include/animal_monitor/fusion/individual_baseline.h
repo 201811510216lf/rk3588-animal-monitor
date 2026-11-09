@@ -16,12 +16,13 @@
 #include <deque>
 #include <map>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 // 按个体 ID 的滑动窗口统计基线。
 class IndividualBaseline
 {
-  public:
+   public:
     // max_samples_per_id：每个 ID 保留的最近样本数上限（<1 时按 1 处理，保证窗口有界）。
     explicit IndividualBaseline(std::uint32_t max_samples_per_id);
 
@@ -35,9 +36,9 @@ class IndividualBaseline
     // 已建立基线的个体数量。
     std::size_t IdCount() const;
 
-  private:
-    const std::uint32_t                        max_samples_per_id_;
-    std::map<std::int32_t, std::deque<float>>  samples_;
+   private:
+    const std::uint32_t                       max_samples_per_id_;
+    std::map<std::int32_t, std::deque<float>> samples_;
 };
 
 }  // namespace animal_monitor::fusion

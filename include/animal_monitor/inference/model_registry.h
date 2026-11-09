@@ -17,11 +17,12 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/inference/model_manifest.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 class ModelRegistry
 {
-  public:
+   public:
     // 模型状态记录（供应用打印/监控）。
     struct StatusRecord
     {
@@ -54,7 +55,7 @@ class ModelRegistry
     // 已注册模型数量。
     std::size_t Count() const;
 
-  private:
+   private:
     void RecordStatusLocked(const std::string& key, const std::string& status,
                             const std::string& message);
 

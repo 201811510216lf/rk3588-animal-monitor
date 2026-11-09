@@ -9,12 +9,12 @@
 
 #include <cmath>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 IndividualBaseline::IndividualBaseline(std::uint32_t max_samples_per_id)
     : max_samples_per_id_(max_samples_per_id < 1u ? 1u : max_samples_per_id)
-{
-}
+{}
 
 void IndividualBaseline::AddSample(std::int32_t id, float value)
 {
@@ -82,9 +82,6 @@ bool IndividualBaseline::GetStats(std::int32_t id, std::uint32_t* count, float* 
     return true;
 }
 
-std::size_t IndividualBaseline::IdCount() const
-{
-    return samples_.size();
-}
+std::size_t IndividualBaseline::IdCount() const { return samples_.size(); }
 
 }  // namespace animal_monitor::fusion

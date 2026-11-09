@@ -18,9 +18,11 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 Status StatusFromErrno(int error, const std::string& what)
 {
@@ -47,13 +49,9 @@ Status StatusFromErrno(int error, const std::string& what)
 
 WatchdogClient::WatchdogClient(std::string device_path, int timeout_seconds)
     : device_path_(std::move(device_path)), timeout_seconds_(timeout_seconds)
-{
-}
+{}
 
-WatchdogClient::~WatchdogClient()
-{
-    Close();
-}
+WatchdogClient::~WatchdogClient() { Close(); }
 
 Status WatchdogClient::Open()
 {
@@ -77,9 +75,7 @@ Status WatchdogClient::Open()
     }
 
     // 身份查询：失败非致命（部分驱动不支持），仅影响诊断信息。
-    struct watchdog_info info
-    {
-    };
+    struct watchdog_info info{};
     if (::ioctl(fd, WDIOC_GETSUPPORT, &info) < 0)
     {
         support_info_ = "(WDIOC_GETSUPPORT 失败)";

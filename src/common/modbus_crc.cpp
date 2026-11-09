@@ -1,6 +1,7 @@
 #include "animal_monitor/common/modbus_crc.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 std::uint16_t ModbusCrc16(const std::uint8_t* data, std::size_t size)
 {
@@ -31,7 +32,7 @@ std::uint16_t ModbusCrc16(const std::vector<std::uint8_t>& data)
 void AppendModbusCrc(std::vector<std::uint8_t>& frame)
 {
     const std::uint16_t crc = ModbusCrc16(frame.data(), frame.size());
-    frame.push_back(static_cast<std::uint8_t>(crc & 0xFF));        // 低字节在前
+    frame.push_back(static_cast<std::uint8_t>(crc & 0xFF));  // 低字节在前
     frame.push_back(static_cast<std::uint8_t>((crc >> 8) & 0xFF));
 }
 
@@ -41,7 +42,7 @@ bool VerifyModbusCrc(const std::vector<std::uint8_t>& frame)
     {
         return false;
     }
-    const std::size_t payload_size = frame.size() - 2;
+    const std::size_t   payload_size = frame.size() - 2;
     const std::uint16_t expected =
         static_cast<std::uint16_t>(frame[payload_size] | (frame[payload_size + 1] << 8));
     return ModbusCrc16(frame.data(), payload_size) == expected;

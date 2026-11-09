@@ -20,7 +20,8 @@
 struct gpiod_chip;
 struct gpiod_line;
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 enum class GpioDirection
 {
@@ -31,14 +32,14 @@ enum class GpioDirection
 // libgpiod v1 用户态 GPIO 客户端（gpio character device）。
 class GpioClient
 {
-  public:
+   public:
     // chip_path：gpiochip 设备节点（如 "/dev/gpiochip0"）；line_offset：行号。
     GpioClient(std::string chip_path, unsigned int line_offset);
 
     // RAII：析构时释放行与芯片。
     ~GpioClient();
 
-    GpioClient(const GpioClient&) = delete;
+    GpioClient(const GpioClient&)            = delete;
     GpioClient& operator=(const GpioClient&) = delete;
 
     // 打开芯片并请求行。输入行用 gpiod_line_request_input；
@@ -63,11 +64,11 @@ class GpioClient
 
     bool IsOpen() const { return line_ != nullptr; }
 
-  private:
-    std::string   chip_path_;
-    unsigned int  line_offset_;
-    gpiod_chip*   chip_ = nullptr;
-    gpiod_line*   line_ = nullptr;
+   private:
+    std::string  chip_path_;
+    unsigned int line_offset_;
+    gpiod_chip*  chip_ = nullptr;
+    gpiod_line*  line_ = nullptr;
 };
 
 }  // namespace animal_monitor

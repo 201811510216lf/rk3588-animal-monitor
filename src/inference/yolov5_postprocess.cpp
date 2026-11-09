@@ -4,9 +4,11 @@
 #include <cmath>
 #include <map>
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
-namespace {
+namespace
+{
 
 constexpr int kAnchorCount       = 3;
 constexpr int kBoxAttributeCount = 5;  // tx, ty, tw, th, box_conf（类别跟随其后）

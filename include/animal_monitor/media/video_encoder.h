@@ -7,7 +7,8 @@
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 enum class VideoCodec : std::uint32_t
 {
@@ -33,15 +34,15 @@ struct EncoderConfig
 struct EncodedPacket
 {
     std::vector<std::uint8_t> data;
-    std::int64_t              pts_us = 0;
-    std::int64_t              dts_us = 0;
+    std::int64_t              pts_us    = 0;
+    std::int64_t              dts_us    = 0;
     bool                      key_frame = false;
 };
 
 // 视频编码器抽象：MPP 硬编码（目标板）、mock 编码器（host）。
 class VideoEncoder
 {
-  public:
+   public:
     virtual ~VideoEncoder() = default;
 
     virtual Status Initialize(const EncoderConfig& config) = 0;

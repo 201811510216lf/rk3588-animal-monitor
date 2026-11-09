@@ -2,13 +2,14 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 服务基类：所有可运行子系统（camera_service、video_pipeline、inference_service 等）
 // 统一生命周期：Start() 成功后才允许进入运行态；Stop() 必须幂等且可安全重入。
 class Service
 {
-  public:
+   public:
     virtual ~Service() = default;
 
     // 展示名（状态表使用）。

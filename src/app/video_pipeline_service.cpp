@@ -6,9 +6,11 @@
 #include "animal_monitor/common/bounded_queue.h"
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr std::size_t kEncInputQueueCapacity = 4;
 
@@ -19,7 +21,7 @@ bool AsBool(const config::ConfigValue* parent, const char* key, bool fallback)
         return fallback;
     }
     const config::ConfigValue* entry = parent->Find(key);
-    bool                        value = fallback;
+    bool                       value = fallback;
     if (entry != nullptr)
     {
         entry->AsBool(&value);
@@ -34,7 +36,7 @@ std::int64_t AsInt(const config::ConfigValue* parent, const char* key, std::int6
         return fallback;
     }
     const config::ConfigValue* entry = parent->Find(key);
-    std::int64_t                value = fallback;
+    std::int64_t               value = fallback;
     if (entry != nullptr)
     {
         entry->AsInt64(&value);
@@ -61,15 +63,15 @@ std::string AsString(const config::ConfigValue* parent, const char* key,
 
 class VideoPipelineService::Impl
 {
-  public:
-    std::unique_ptr<VideoSource>    sources[2];
+   public:
+    std::unique_ptr<VideoSource>       sources[2];
     std::unique_ptr<FrameSynchronizer> synchronizer;
     std::unique_ptr<FrameCompositor>   compositor;
     std::unique_ptr<VideoEncoder>      encoder;
     std::unique_ptr<VideoPublisher>    publisher;
 
-    BoundedQueue<VideoFramePtr> enc_input{
-        kEncInputQueueCapacity, BoundedQueue<VideoFramePtr>::PushPolicy::kDropOldest};
+    BoundedQueue<VideoFramePtr> enc_input{kEncInputQueueCapacity,
+                                          BoundedQueue<VideoFramePtr>::PushPolicy::kDropOldest};
 
     std::thread capture_threads[2];
     std::thread sync_thread;
@@ -87,17 +89,11 @@ class VideoPipelineService::Impl
     std::uint64_t      compose_errors    = 0;
 };
 
-VideoPipelineService::~VideoPipelineService()
-{
-    Stop();
-}
+VideoPipelineService::~VideoPipelineService() { Stop(); }
 
-const char* VideoPipelineService::Name() const
-{
-    return "video_pipeline";
-}
+const char* VideoPipelineService::Name() const { return "video_pipeline"; }
 
-Status VideoPipelineService::BuildFromConfig(const config::ConfigValue& root,
+Status VideoPipelineService::BuildFromConfig(const config::ConfigValue&             root,
                                              std::unique_ptr<VideoPipelineService>* out)
 {
     if (out == nullptr)
@@ -105,7 +101,7 @@ Status VideoPipelineService::BuildFromConfig(const config::ConfigValue& root,
         return Status(StatusCode::kInvalidArgument, "null output");
     }
 
-    auto service  = std::unique_ptr<VideoPipelineService>(new VideoPipelineService());
+    auto service   = std::unique_ptr<VideoPipelineService>(new VideoPipelineService());
     service->impl_ = std::make_unique<Impl>();
 
     // 双路视频源（配置缺失视为错误，见 ConfigValidator）。
@@ -116,12 +112,11 @@ Status VideoPipelineService::BuildFromConfig(const config::ConfigValue& root,
     }
     for (int id = 0; id < 2; ++id)
     {
-        const char*              key = (id == 0) ? "camera0" : "camera1";
+        const char*                key = (id == 0) ? "camera0" : "camera1";
         const config::ConfigValue* cam = cameras->Find(key);
         if (cam == nullptr)
         {
-            return Status(StatusCode::kConfigurationError,
-                          std::string("missing cameras.") + key);
+            return Status(StatusCode::kConfigurationError, std::string("missing cameras.") + key);
         }
         service->impl_->sources[id] = CreateVideoSource(*cam, id);
         if (service->impl_->sources[id] == nullptr)
@@ -135,32 +130,30 @@ Status VideoPipelineService::BuildFromConfig(const config::ConfigValue& root,
     // 同步器：容差来自 composition.sync_tolerance_ms。
     const config::ConfigValue* composition = root.Find("composition");
     FrameSynchronizer::Config  sync_config;
-    sync_config.tolerance_ns = AsInt(composition, "sync_tolerance_ms", 40) * 1'000'000;
-    sync_config.queue_capacity =
-        static_cast<std::size_t>(AsInt(composition, "queue_capacity", 8));
+    sync_config.tolerance_ns   = AsInt(composition, "sync_tolerance_ms", 40) * 1'000'000;
+    sync_config.queue_capacity = static_cast<std::size_t>(AsInt(composition, "queue_capacity", 8));
     service->impl_->synchronizer = std::make_unique<FrameSynchronizer>(sync_config);
 
     // 合成器。
     CompositorConfig compose_config;
-    compose_config.out_width  = static_cast<std::uint32_t>(
-        AsInt(composition, "output_width", 1280));
-    compose_config.out_height = static_cast<std::uint32_t>(
-        AsInt(composition, "output_height", 720));
-    compose_config.gap_px     = static_cast<std::uint32_t>(AsInt(composition, "gap_px", 0));
-    const std::string layout  = AsString(composition, "layout", "side_by_side");
-    compose_config.layout     = (layout == "top_bottom") ? CompositorLayout::kTopBottom
-                                                         : CompositorLayout::kSideBySide;
+    compose_config.out_width = static_cast<std::uint32_t>(AsInt(composition, "output_width", 1280));
+    compose_config.out_height =
+        static_cast<std::uint32_t>(AsInt(composition, "output_height", 720));
+    compose_config.gap_px    = static_cast<std::uint32_t>(AsInt(composition, "gap_px", 0));
+    const std::string layout = AsString(composition, "layout", "side_by_side");
+    compose_config.layout =
+        (layout == "top_bottom") ? CompositorLayout::kTopBottom : CompositorLayout::kSideBySide;
     service->impl_->compositor = std::make_unique<FrameCompositor>(compose_config);
 
     // 编码器（配置来自 encoder 段）。
     const config::ConfigValue* enc_cfg = root.Find("encoder");
     EncoderConfig              encoder_config;
-    encoder_config.width  = static_cast<std::uint32_t>(AsInt(enc_cfg, "width", 1280));
-    encoder_config.height = static_cast<std::uint32_t>(AsInt(enc_cfg, "height", 720));
-    encoder_config.fps    = static_cast<std::uint32_t>(AsInt(enc_cfg, "fps", 30));
+    encoder_config.width       = static_cast<std::uint32_t>(AsInt(enc_cfg, "width", 1280));
+    encoder_config.height      = static_cast<std::uint32_t>(AsInt(enc_cfg, "height", 720));
+    encoder_config.fps         = static_cast<std::uint32_t>(AsInt(enc_cfg, "fps", 30));
     encoder_config.bitrate_bps = AsInt(enc_cfg, "bitrate_bps", 2'000'000);
     encoder_config.gop         = static_cast<std::uint32_t>(AsInt(enc_cfg, "gop", 60));
-    service->impl_->encoder = CreateVideoEncoder(encoder_config);
+    service->impl_->encoder    = CreateVideoEncoder(encoder_config);
     if (service->impl_->encoder == nullptr)
     {
         return Status(StatusCode::kUnimplemented, "failed to create video encoder");
@@ -168,10 +161,9 @@ Status VideoPipelineService::BuildFromConfig(const config::ConfigValue& root,
 
     // 发布器（配置来自 network 段）。
     const config::ConfigValue* network = root.Find("network");
-    const config::ConfigValue* rtsp = (network != nullptr && network->IsMap())
-                                          ? network->Find("rtsp")
-                                          : nullptr;
-    VideoPublisher::Config     publisher_config;
+    const config::ConfigValue* rtsp =
+        (network != nullptr && network->IsMap()) ? network->Find("rtsp") : nullptr;
+    VideoPublisher::Config publisher_config;
     if (rtsp != nullptr && rtsp->IsMap())
     {
         publisher_config.rtsp_port = static_cast<std::uint16_t>(AsInt(rtsp, "port", 8554));
@@ -199,8 +191,7 @@ Status VideoPipelineService::Start()
         const Status status = source->Start();
         if (!status)
         {
-            AM_LOG_ERROR() << "source " << source->Name() << " start failed: "
-                           << status.ToString();
+            AM_LOG_ERROR() << "source " << source->Name() << " start failed: " << status.ToString();
             Stop();
             return status;
         }
@@ -210,9 +201,9 @@ Status VideoPipelineService::Start()
     // 线程：camera0/1 采集 → 同步+合成 → 编码输入 → 编码输出（见 thread_model.md）。
     impl_->capture_threads[0] = std::thread(&VideoPipelineService::CaptureLoop, this, 0);
     impl_->capture_threads[1] = std::thread(&VideoPipelineService::CaptureLoop, this, 1);
-    impl_->sync_thread   = std::thread(&VideoPipelineService::SyncLoop, this);
-    impl_->enc_in_thread = std::thread(&VideoPipelineService::EncInLoop, this);
-    impl_->enc_out_thread = std::thread(&VideoPipelineService::EncOutLoop, this);
+    impl_->sync_thread        = std::thread(&VideoPipelineService::SyncLoop, this);
+    impl_->enc_in_thread      = std::thread(&VideoPipelineService::EncInLoop, this);
+    impl_->enc_out_thread     = std::thread(&VideoPipelineService::EncOutLoop, this);
     return Status::MakeOk();
 }
 
@@ -383,8 +374,7 @@ void VideoPipelineService::EncOutLoop()
             continue;
         }
         const Status feed = impl_->publisher->FeedH264(packet.data.data(), packet.data.size(),
-                                                       packet.dts_us / 1000,
-                                                       packet.pts_us / 1000);
+                                                       packet.dts_us / 1000, packet.pts_us / 1000);
         if (feed)
         {
             std::lock_guard<std::mutex> lock(impl_->stats_mutex);

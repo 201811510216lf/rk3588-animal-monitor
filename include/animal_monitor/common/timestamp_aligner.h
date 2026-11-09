@@ -3,7 +3,8 @@
 #include <cstdint>
 #include <optional>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 双路帧时间戳对齐结果。
 struct AlignedPair
@@ -22,7 +23,7 @@ struct AlignedPair
 // 内部使用单调时钟纳秒时间戳；墙上时间另行保存（AGENTS 规则）。
 class TimestampAligner
 {
-  public:
+   public:
     explicit TimestampAligner(std::int64_t tolerance_ns);
 
     // 提交一路新样本（source_id 取 0/1）；返回是否产生对齐结果。
@@ -30,7 +31,7 @@ class TimestampAligner
 
     void Reset();
 
-  private:
+   private:
     const std::int64_t tolerance_ns_;
     bool               has_a_ = false;
     bool               has_b_ = false;

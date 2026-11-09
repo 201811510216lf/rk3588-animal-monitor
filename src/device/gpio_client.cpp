@@ -16,9 +16,11 @@
 
 #include <gpiod.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr char kConsumerName[] = "animal_monitor";
 
@@ -47,13 +49,9 @@ Status StatusFromErrno(int error, const std::string& what)
 
 GpioClient::GpioClient(std::string chip_path, unsigned int line_offset)
     : chip_path_(std::move(chip_path)), line_offset_(line_offset)
-{
-}
+{}
 
-GpioClient::~GpioClient()
-{
-    Close();
-}
+GpioClient::~GpioClient() { Close(); }
 
 Status GpioClient::Open(GpioDirection direction)
 {
@@ -139,9 +137,7 @@ Status GpioClient::WaitForEvent(int timeout_ms)
         return Status(StatusCode::kUnavailable, "GPIO 行未打开");
     }
 
-    struct timespec timeout
-    {
-    };
+    struct timespec timeout{};
     if (timeout_ms >= 0)
     {
         timeout.tv_sec  = timeout_ms / 1000;

@@ -21,7 +21,8 @@ using animal_monitor::Htu21dCrcOk;
 using animal_monitor::Htu21dRhPercent;
 using animal_monitor::Htu21dTempC;
 
-namespace {
+namespace
+{
 
 bool Approx(float actual, float expected, float eps = 1e-3f)
 {
@@ -46,8 +47,8 @@ AM_TEST(crc8_round_trip_for_typical_values)
     const std::uint16_t values[] = {0x0000, 0x683A, 0x4E85, 0xFFFF, 0x1234, 0x8000};
     for (std::uint16_t v : values)
     {
-        const std::uint8_t crc = Htu21dCrc8(static_cast<std::uint8_t>(v >> 8),
-                                            static_cast<std::uint8_t>(v & 0xFF));
+        const std::uint8_t crc =
+            Htu21dCrc8(static_cast<std::uint8_t>(v >> 8), static_cast<std::uint8_t>(v & 0xFF));
         AM_EXPECT(Htu21dCrcOk(v, crc));
     }
 }
@@ -61,16 +62,16 @@ AM_TEST(crc8_rejects_corrupted_byte)
 
 AM_TEST(rh_endpoints)
 {
-    AM_EXPECT(Approx(Htu21dRhPercent(0x0000), -6.0f, 1e-4f));       // 任务书端点
-    AM_EXPECT(Approx(Htu21dRhPercent(0xFFFF), 118.9981f));          // 逼近 125，不到
-    AM_EXPECT(Approx(Htu21dRhPercent(0x8000), 56.5f));              // 中点
+    AM_EXPECT(Approx(Htu21dRhPercent(0x0000), -6.0f, 1e-4f));  // 任务书端点
+    AM_EXPECT(Approx(Htu21dRhPercent(0xFFFF), 118.9981f));     // 逼近 125，不到
+    AM_EXPECT(Approx(Htu21dRhPercent(0x8000), 56.5f));         // 中点
 }
 
 AM_TEST(temp_endpoints)
 {
-    AM_EXPECT(Approx(Htu21dTempC(0x0000), -46.85f, 1e-4f));         // 任务书端点
-    AM_EXPECT(Approx(Htu21dTempC(0xFFFF), 128.8673f));              // 量程上界附近
-    AM_EXPECT(Approx(Htu21dTempC(0x8000), 41.01f));                 // 中点
+    AM_EXPECT(Approx(Htu21dTempC(0x0000), -46.85f, 1e-4f));  // 任务书端点
+    AM_EXPECT(Approx(Htu21dTempC(0xFFFF), 128.8673f));       // 量程上界附近
+    AM_EXPECT(Approx(Htu21dTempC(0x8000), 41.01f));          // 中点
 }
 
 AM_TEST(conversions_are_strictly_monotonic)
@@ -81,7 +82,4 @@ AM_TEST(conversions_are_strictly_monotonic)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

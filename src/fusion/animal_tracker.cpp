@@ -11,9 +11,11 @@
 #include <cstddef>
 #include <numeric>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
-namespace {
+namespace
+{
 
 // 两框 IoU。框为 {x, y, w, h}；任一面积为 0 或不相交时返回 0。
 float BboxIoU(const float a[4], const float b[4])
@@ -27,11 +29,11 @@ float BboxIoU(const float a[4], const float b[4])
     const double bx2 = static_cast<double>(b[0] + b[2]);
     const double by2 = static_cast<double>(b[1] + b[3]);
 
-    const double inter_w = std::max(0.0, std::min(ax2, bx2) - std::max(ax1, bx1));
-    const double inter_h = std::max(0.0, std::min(ay2, by2) - std::max(ay1, by1));
-    const double inter   = inter_w * inter_h;
-    const double area_a  = static_cast<double>(a[2]) * static_cast<double>(a[3]);
-    const double area_b  = static_cast<double>(b[2]) * static_cast<double>(b[3]);
+    const double inter_w    = std::max(0.0, std::min(ax2, bx2) - std::max(ax1, bx1));
+    const double inter_h    = std::max(0.0, std::min(ay2, by2) - std::max(ay1, by1));
+    const double inter      = inter_w * inter_h;
+    const double area_a     = static_cast<double>(a[2]) * static_cast<double>(a[3]);
+    const double area_b     = static_cast<double>(b[2]) * static_cast<double>(b[3]);
     const double union_area = area_a + area_b - inter;
     if (union_area <= 0.0)
     {
@@ -71,7 +73,7 @@ AnimalTracker::AnimalTracker(Config config) : config_(config)
 }
 
 std::vector<Track> AnimalTracker::Update(const std::vector<inference::Detection>& detections,
-                                         std::uint64_t                           seq)
+                                         std::uint64_t                            seq)
 {
     // matched[i]：tracks_[i] 本帧是否已关联（新建 track 记为已关联，本帧不计 miss）。
     std::vector<bool> matched(tracks_.size(), false);
@@ -86,9 +88,9 @@ std::vector<Track> AnimalTracker::Update(const std::vector<inference::Detection>
                                detection.bbox.h};
 
         // 贪心关联：取未匹配 track 中 IoU 最大且不低于阈值者。
-        std::size_t best_index  = 0;
-        bool        has_best    = false;
-        float       best_iou    = 0.0f;
+        std::size_t best_index = 0;
+        bool        has_best   = false;
+        float       best_iou   = 0.0f;
         for (std::size_t i = 0; i < tracks_.size(); ++i)
         {
             if (matched[i])
@@ -106,7 +108,7 @@ std::vector<Track> AnimalTracker::Update(const std::vector<inference::Detection>
 
         if (has_best)
         {
-            Track& track = tracks_[best_index];
+            Track& track        = tracks_[best_index];
             track.bbox[0]       = bbox[0];
             track.bbox[1]       = bbox[1];
             track.bbox[2]       = bbox[2];
@@ -118,7 +120,7 @@ std::vector<Track> AnimalTracker::Update(const std::vector<inference::Detection>
         else
         {
             Track track;
-            track.track_id      = next_id_;
+            track.track_id = next_id_;
             ++next_id_;
             track.bbox[0]       = bbox[0];
             track.bbox[1]       = bbox[1];
@@ -139,15 +141,14 @@ std::vector<Track> AnimalTracker::Update(const std::vector<inference::Detection>
             ++tracks_[i].miss_count;
         }
     }
-    tracks_.erase(std::remove_if(tracks_.begin(), tracks_.end(),
-                                 [this](const Track& track)
+    tracks_.erase(std::remove_if(tracks_.begin(), tracks_.end(), [this](const Track& track)
                                  { return track.miss_count > config_.max_miss; }),
                   tracks_.end());
 
     // 容量裁剪：确定性淘汰最陈旧者（miss 多 → 更早 last_seen_seq → 更小 track_id）。
     if (tracks_.size() > config_.max_tracks)
     {
-        const std::size_t remove_count = tracks_.size() - config_.max_tracks;
+        const std::size_t        remove_count = tracks_.size() - config_.max_tracks;
         std::vector<std::size_t> order(tracks_.size());
         std::iota(order.begin(), order.end(), std::size_t{0});
         std::sort(order.begin(), order.end(),

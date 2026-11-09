@@ -15,7 +15,8 @@ using animal_monitor::TileRect;
 using animal_monitor::VideoFrame;
 using animal_monitor::VideoFramePtr;
 
-namespace {
+namespace
+{
 
 VideoFramePtr MakeSolidFrame(std::uint32_t width, std::uint32_t height, std::uint8_t b,
                              std::uint8_t g, std::uint8_t r)
@@ -113,10 +114,10 @@ AM_TEST(compose_side_by_side_pixel_layout)
     config.out_height = 4;
     config.gap_px     = 0;
 
-    FrameCompositor compositor(config);
+    FrameCompositor            compositor(config);
     std::vector<VideoFramePtr> inputs;
-    inputs.push_back(MakeSolidFrame(4, 4, 0, 0, 255));   // 左侧纯红
-    inputs.push_back(MakeSolidFrame(4, 4, 255, 0, 0));   // 右侧纯蓝
+    inputs.push_back(MakeSolidFrame(4, 4, 0, 0, 255));  // 左侧纯红
+    inputs.push_back(MakeSolidFrame(4, 4, 255, 0, 0));  // 右侧纯蓝
 
     VideoFramePtr out;
     const auto    status = compositor.Compose(inputs, &out);
@@ -145,7 +146,7 @@ AM_TEST(compose_with_gap_leaves_black)
     config.out_height = 2;
     config.gap_px     = 1;  // 4 + 1 + 4
 
-    FrameCompositor compositor(config);
+    FrameCompositor            compositor(config);
     std::vector<VideoFramePtr> inputs;
     inputs.push_back(MakeSolidFrame(4, 2, 0, 0, 255));
     inputs.push_back(MakeSolidFrame(4, 2, 255, 0, 0));
@@ -163,7 +164,4 @@ AM_TEST(compose_with_gap_leaves_black)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

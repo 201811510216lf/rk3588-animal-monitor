@@ -20,12 +20,13 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // at24 EEPROM sysfs 客户端。
 class EepromClient
 {
-  public:
+   public:
     // sysfs_path：at24 eeprom 文件路径（配置传入）。
     explicit EepromClient(std::string sysfs_path);
 
@@ -37,7 +38,7 @@ class EepromClient
 
     const std::string& SysfsPath() const { return sysfs_path_; }
 
-  private:
+   private:
     std::string sysfs_path_;
 };
 

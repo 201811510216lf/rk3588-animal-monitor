@@ -6,13 +6,14 @@
 
 #include "animal_monitor/media/video_encoder.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 明确标注的 MOCK 编码器：不产生真实码流。
 // 每 Encode 一帧返回一个固定模式假包（仅用于验证流水线接线与队列/统计逻辑）。
 class MockVideoEncoder : public VideoEncoder
 {
-  public:
+   public:
     MockVideoEncoder();
     ~MockVideoEncoder() override;
 
@@ -27,7 +28,7 @@ class MockVideoEncoder : public VideoEncoder
     };
     Snapshot GetSnapshot() const;
 
-  private:
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };

@@ -19,19 +19,20 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // sysfs PWM 客户端：写 export 导出通道，操作 period/duty_cycle/enable 文件。
 class PwmClient
 {
-  public:
+   public:
     // chip_path：PWM 芯片 sysfs 目录（如 "/sys/class/pwm/pwmchip0"）；channel：通道号。
     PwmClient(std::string chip_path, unsigned int channel);
 
     // RAII：析构时关闭（disable + unexport）。
     ~PwmClient();
 
-    PwmClient(const PwmClient&) = delete;
+    PwmClient(const PwmClient&)            = delete;
     PwmClient& operator=(const PwmClient&) = delete;
 
     // 写 chip_path/export 导出通道。通道已被其他进程导出（EBUSY）视为成功，
@@ -52,13 +53,13 @@ class PwmClient
 
     bool IsOpen() const { return exported_; }
 
-  private:
+   private:
     // 向 sysfs 文件写文本内容；EINVAL 映射为 kInvalidArgument（如 duty>period）。
     Status WriteSysfsFile(const std::string& path, const std::string& text);
 
     std::string  chip_path_;
     unsigned int channel_;
-    std::string  pwm_path_;    // Open 成功后确定：chip_path + "/pwm<channel>"
+    std::string  pwm_path_;  // Open 成功后确定：chip_path + "/pwm<channel>"
     bool         exported_ = false;
     bool         owned_    = false;  // 本实例是否执行了 export
 };

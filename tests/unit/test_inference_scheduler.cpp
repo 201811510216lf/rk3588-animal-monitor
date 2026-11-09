@@ -21,7 +21,8 @@ using animal_monitor::inference::InferenceScheduler;
 using animal_monitor::inference::MockInferenceModel;
 using animal_monitor::inference::ScheduleStrategy;
 
-namespace {
+namespace
+{
 
 using namespace std::chrono_literals;
 

@@ -1,6 +1,7 @@
 // 文件名：src/media/stream_publisher.cpp
 // 状态：implemented（模板）/ hardware-blocked —— 未经目标板编译与实测（UNVERIFIED）
-// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md 审计结论重写；
+// 来源：按 docs/migration/source_audit.md 与 _audit_reports/audit_ref_RKMediaProject.md
+// 审计结论重写；
 //       API 形状参考 .ref_audit_RKMediaProject/src/zlm_publisher.cpp（只读审计），未逐行拷贝。
 // 与参考实现的差异（重写点）：
 //  - 时间戳接口输入已是 ms（参考实现为 us 入参）：单调化逻辑在 ms 域重写，
@@ -16,18 +17,20 @@
 
 #include "animal_monitor/logging/logger.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
-constexpr const char* kDefaultVhost = "__defaultVhost__";
+constexpr const char*   kDefaultVhost           = "__defaultVhost__";
 constexpr std::uint64_t kDefaultFrameIntervalMs = 33;  // 时间戳回退步长（~30fps）
 
 }  // namespace
 
 class StreamPublisher::Impl
 {
-  public:
+   public:
     ~Impl() { Close(); }
 
     Status Initialize(const VideoPublisher::Config& config)
@@ -42,33 +45,33 @@ class StreamPublisher::Impl
 
         // mk_env_init 为进程级初始化；重复调用可接受（幂等）。
         mk_config env_config{};
-        env_config.thread_num     = 0;  // 0 = 自动
-        env_config.log_level      = 0;
-        env_config.log_mask       = LOG_CONSOLE;
-        env_config.log_file_path  = nullptr;
-        env_config.log_file_days  = 0;
-        env_config.ini            = nullptr;
-        env_config.ini_is_path    = 0;
-        env_config.ssl            = nullptr;
-        env_config.ssl_is_path    = 1;
-        env_config.ssl_pwd        = nullptr;
+        env_config.thread_num    = 0;  // 0 = 自动
+        env_config.log_level     = 0;
+        env_config.log_mask      = LOG_CONSOLE;
+        env_config.log_file_path = nullptr;
+        env_config.log_file_days = 0;
+        env_config.ini           = nullptr;
+        env_config.ini_is_path   = 0;
+        env_config.ssl           = nullptr;
+        env_config.ssl_is_path   = 1;
+        env_config.ssl_pwd       = nullptr;
         mk_env_init(&env_config);
 
         http_port_ = mk_http_server_start(config_.http_port, 0);
         if (http_port_ == 0)
         {
             RollbackLocked();
-            return Status(StatusCode::kHardwareUnavailable,
-                          "[ZLM] HTTP server 启动失败（端口 " +
-                              std::to_string(config_.http_port) + "）");
+            return Status(
+                StatusCode::kHardwareUnavailable,
+                "[ZLM] HTTP server 启动失败（端口 " + std::to_string(config_.http_port) + "）");
         }
         rtsp_port_ = mk_rtsp_server_start(config_.rtsp_port, 0);
         if (rtsp_port_ == 0)
         {
             RollbackLocked();
-            return Status(StatusCode::kHardwareUnavailable,
-                          "[ZLM] RTSP server 启动失败（端口 " +
-                              std::to_string(config_.rtsp_port) + "）");
+            return Status(
+                StatusCode::kHardwareUnavailable,
+                "[ZLM] RTSP server 启动失败（端口 " + std::to_string(config_.rtsp_port) + "）");
         }
 
         if (config_.enable_webrtc)
@@ -103,19 +106,18 @@ class StreamPublisher::Impl
         mk_ini_set_option_int(media_option, "enable_mp4", 0);
         mk_ini_set_option_int(media_option, "enable_audio", 0);
 
-        media_ = mk_media_create2(kDefaultVhost, config_.app.c_str(), config_.stream.c_str(),
-                                   0.0f, media_option);
+        media_ = mk_media_create2(kDefaultVhost, config_.app.c_str(), config_.stream.c_str(), 0.0f,
+                                  media_option);
         mk_ini_release(media_option);
         if (media_ == nullptr)
         {
             RollbackLocked();
-            return Status(StatusCode::kInternal,
-                          "[ZLM] mk_media_create2 失败（app=" + config_.app +
-                              " stream=" + config_.stream + "）");
+            return Status(StatusCode::kInternal, "[ZLM] mk_media_create2 失败（app=" + config_.app +
+                                                     " stream=" + config_.stream + "）");
         }
 
         codec_args track_args{};
-        mk_track  track = mk_track_create(MKCodecH264, &track_args);
+        mk_track   track = mk_track_create(MKCodecH264, &track_args);
         if (track == nullptr)
         {
             RollbackLocked();
@@ -150,13 +152,12 @@ class StreamPublisher::Impl
         }
         if (!IsAnnexBStartCode(data, size))
         {
-            return Status(StatusCode::kInvalidArgument,
-                          "[ZLM] 输入非 Annex-B 码流（缺少起始码）");
+            return Status(StatusCode::kInvalidArgument, "[ZLM] 输入非 Annex-B 码流（缺少起始码）");
         }
 
         // 时间戳单调化（ms 域；参考 NormalizeTimestamp 思想重写）。
-        std::uint64_t dts_out = 0;
-        std::uint64_t pts_out = 0;
+        std::uint64_t       dts_out         = 0;
+        std::uint64_t       pts_out         = 0;
         const std::uint64_t fallback_before = fallback_count_;
         NormalizeTimestampMs(dts_ms, pts_ms, &dts_out, &pts_out);
         if (fallback_count_ != fallback_before && fallback_count_ == 1)
@@ -176,8 +177,8 @@ class StreamPublisher::Impl
             {
                 return Status(StatusCode::kInternal, "[ZLM] 拆分出空 NALU");
             }
-            const int ret = mk_media_input_h264(media_, nalu.data,
-                                                static_cast<int>(nalu.len), dts_out, pts_out);
+            const int ret = mk_media_input_h264(media_, nalu.data, static_cast<int>(nalu.len),
+                                                dts_out, pts_out);
             if (ret == 0)
             {
                 return Status(StatusCode::kInternal,
@@ -191,8 +192,8 @@ class StreamPublisher::Impl
     {
         std::lock_guard<std::mutex> lock(mutex_);
         RollbackLocked();
-        has_last_ = false;
-        last_dts_ms_ = 0;
+        has_last_       = false;
+        last_dts_ms_    = 0;
         fallback_count_ = 0;
     }
 
@@ -207,7 +208,7 @@ class StreamPublisher::Impl
                config_.stream;
     }
 
-  private:
+   private:
     struct NaluRange
     {
         const std::uint8_t* data = nullptr;
@@ -223,9 +224,9 @@ class StreamPublisher::Impl
             media_ = nullptr;
         }
         mk_stop_all_server();
-        http_port_ = 0;
-        rtsp_port_ = 0;
-        rtc_port_  = 0;
+        http_port_   = 0;
+        rtsp_port_   = 0;
+        rtc_port_    = 0;
         initialized_ = false;
     }
 
@@ -282,24 +283,21 @@ class StreamPublisher::Impl
         {
             return false;
         }
-        if (size >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x00 &&
-            data[3] == 0x01)
+        if (size >= 4 && data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x00 && data[3] == 0x01)
         {
             return true;
         }
         return data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x01;
     }
 
-    std::size_t FindAnnexBPrefix(const std::uint8_t* data, std::size_t size,
-                                 std::size_t pos) const
+    std::size_t FindAnnexBPrefix(const std::uint8_t* data, std::size_t size, std::size_t pos) const
     {
         if (pos + 4 <= size && data[pos] == 0x00 && data[pos + 1] == 0x00 &&
             data[pos + 2] == 0x00 && data[pos + 3] == 0x01)
         {
             return 4;
         }
-        if (pos + 3 <= size && data[pos] == 0x00 && data[pos + 1] == 0x00 &&
-            data[pos + 2] == 0x01)
+        if (pos + 3 <= size && data[pos] == 0x00 && data[pos + 1] == 0x00 && data[pos + 2] == 0x01)
         {
             return 3;
         }
@@ -334,7 +332,7 @@ class StreamPublisher::Impl
         for (std::size_t i = 0; i < starts.size(); ++i)
         {
             const std::size_t begin = starts[i];
-            std::size_t end         = (i + 1 < starts.size()) ? starts[i + 1] : size;
+            std::size_t       end   = (i + 1 < starts.size()) ? starts[i + 1] : size;
             // 剔除下一起始码前的 0x00 填充。
             while (end > begin && data[end - 1] == 0x00)
             {
@@ -349,30 +347,25 @@ class StreamPublisher::Impl
     }
 
     VideoPublisher::Config config_;
-    mk_media  media_       = nullptr;
-    std::uint16_t http_port_ = 0;
-    std::uint16_t rtsp_port_ = 0;
-    std::uint16_t rtc_port_  = 0;
-    bool        initialized_ = false;
+    mk_media               media_       = nullptr;
+    std::uint16_t          http_port_   = 0;
+    std::uint16_t          rtsp_port_   = 0;
+    std::uint16_t          rtc_port_    = 0;
+    bool                   initialized_ = false;
 
     // 时间戳单调化状态（仅 FeedH264 访问，由 mutex_ 保护）。
-    bool          has_last_      = false;
-    std::uint64_t last_dts_ms_   = 0;
+    bool          has_last_       = false;
+    std::uint64_t last_dts_ms_    = 0;
     std::uint64_t fallback_count_ = 0;
 
     mutable std::mutex mutex_;
 };
 
-StreamPublisher::StreamPublisher() : impl_(std::make_unique<Impl>())
-{
-}
+StreamPublisher::StreamPublisher() : impl_(std::make_unique<Impl>()) {}
 
 StreamPublisher::~StreamPublisher() = default;
 
-Status StreamPublisher::Initialize(const Config& config)
-{
-    return impl_->Initialize(config);
-}
+Status StreamPublisher::Initialize(const Config& config) { return impl_->Initialize(config); }
 
 Status StreamPublisher::FeedH264(const std::uint8_t* data, std::size_t size, std::int64_t dts_ms,
                                  std::int64_t pts_ms)
@@ -380,14 +373,8 @@ Status StreamPublisher::FeedH264(const std::uint8_t* data, std::size_t size, std
     return impl_->FeedH264(data, size, dts_ms, pts_ms);
 }
 
-void StreamPublisher::Close()
-{
-    impl_->Close();
-}
+void StreamPublisher::Close() { impl_->Close(); }
 
-std::string StreamPublisher::RtspUrl() const
-{
-    return impl_->RtspUrl();
-}
+std::string StreamPublisher::RtspUrl() const { return impl_->RtspUrl(); }
 
 }  // namespace animal_monitor

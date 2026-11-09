@@ -16,24 +16,25 @@
 
 #include "animal_monitor/inference/inference_types.h"
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 // 单条跟踪轨迹。
 struct Track
 {
     std::int32_t  track_id      = 0;
     float         bbox[4]       = {0.0f, 0.0f, 0.0f, 0.0f};  // {x, y, w, h}
-    std::uint64_t last_seen_seq = 0;                          // 最近一次匹配到的帧序号
-    std::uint32_t miss_count    = 0;                          // 连续未匹配帧数
+    std::uint64_t last_seen_seq = 0;                         // 最近一次匹配到的帧序号
+    std::uint32_t miss_count    = 0;                         // 连续未匹配帧数
 };
 
 // IoU 关联跟踪器。
 class AnimalTracker
 {
-  public:
+   public:
     struct Config
     {
-        std::uint32_t max_miss      = 3;     // 连续 miss 超过该值即移除（条件 miss_count > max_miss）
+        std::uint32_t max_miss      = 3;  // 连续 miss 超过该值即移除（条件 miss_count > max_miss）
         float         iou_threshold = 0.3f;  // 关联 IoU 下限
         std::uint32_t max_tracks    = 16;    // 活跃 track 上限
     };
@@ -48,9 +49,9 @@ class AnimalTracker
     // 再并列取更小 track_id，保证确定性）。
     // 非法检测框（宽高为负或含非有限值）跳过，不参与关联。
     std::vector<Track> Update(const std::vector<inference::Detection>& detections,
-                              std::uint64_t                           seq);
+                              std::uint64_t                            seq);
 
-  private:
+   private:
     Config             config_;
     std::int32_t       next_id_ = 0;
     std::vector<Track> tracks_;

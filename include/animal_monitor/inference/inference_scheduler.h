@@ -27,7 +27,8 @@
 #include "animal_monitor/inference/inference_types.h"
 #include "animal_monitor/media/video_frame.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // 路由策略。kPriority 当前为固定选择 models[0]（多级优先级/降级策略后续扩展）。
 enum class ScheduleStrategy
@@ -39,7 +40,7 @@ enum class ScheduleStrategy
 
 class InferenceScheduler
 {
-  public:
+   public:
     struct Options
     {
         std::size_t result_queue_capacity = 16;  // 有界队列容量（满策略固定 drop_oldest）
@@ -82,7 +83,7 @@ class InferenceScheduler
 
     Metrics GetMetrics() const;
 
-  private:
+   private:
     std::size_t RouteLocked(std::uint32_t camera_id);  // 调用方须持有 state_mutex_
 
     ScheduleStrategy                 strategy_;

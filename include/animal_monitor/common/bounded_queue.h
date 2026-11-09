@@ -8,7 +8,8 @@
 #include <mutex>
 #include <utility>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 有界线程安全 FIFO 队列。
 //
@@ -21,7 +22,7 @@ namespace animal_monitor {
 template <typename T>
 class BoundedQueue
 {
-  public:
+   public:
     enum class PushPolicy
     {
         kDropNewest,  // 丢弃新元素（默认）
@@ -43,8 +44,7 @@ class BoundedQueue
 
     explicit BoundedQueue(std::size_t capacity, PushPolicy policy = PushPolicy::kDropNewest)
         : capacity_(capacity == 0 ? 1 : capacity), policy_(policy)
-    {
-    }
+    {}
 
     BoundedQueue(const BoundedQueue&)            = delete;
     BoundedQueue& operator=(const BoundedQueue&) = delete;
@@ -134,7 +134,7 @@ class BoundedQueue
         return metrics_;
     }
 
-  private:
+   private:
     bool PushLocked(T item)
     {
         if (closed_)

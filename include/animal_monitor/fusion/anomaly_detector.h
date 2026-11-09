@@ -14,7 +14,8 @@
 
 #include <cstdint>
 
-namespace animal_monitor::fusion {
+namespace animal_monitor::fusion
+{
 
 // 异常判定配置。
 struct AnomalyConfig
@@ -28,7 +29,7 @@ struct AnomalyConfig
 // 判定结果。
 struct AnomalyResult
 {
-    bool   is_anomaly = false;
+    bool is_anomaly = false;
     enum class Reason
     {
         kNone,              // 无异常

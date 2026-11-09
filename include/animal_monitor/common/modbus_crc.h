@@ -4,7 +4,8 @@
 #include <cstdint>
 #include <vector>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // Modbus RTU CRC-16（多项式 0xA001，初始值 0xFFFF）。
 // 帧内字节序：CRC 低字节在前（little-endian），与 Modbus 规范一致。

@@ -24,12 +24,13 @@
 #include "animal_monitor/inference/model_manifest.h"
 #include "animal_monitor/inference/yolov5_postprocess.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
 // rknn_outputs_get 所得缓冲的 RAII 持有：析构自动 rknn_outputs_release。
 class RknnOutputs
 {
-  public:
+   public:
     RknnOutputs() = default;
     ~RknnOutputs() { Release(); }
 
@@ -48,7 +49,7 @@ class RknnOutputs
         outputs_ = std::move(outputs);
     }
 
-  private:
+   private:
     rknn_context             context_ = nullptr;
     std::vector<rknn_output> outputs_;
 };
@@ -56,7 +57,7 @@ class RknnOutputs
 // rknn_context 的 RAII 封装。InitFromFile 失败后不可用；析构自动 rknn_destroy。
 class RknnRuntime
 {
-  public:
+   public:
     RknnRuntime() = default;
     ~RknnRuntime();
 
@@ -77,7 +78,7 @@ class RknnRuntime
     Status Run(const rknn_input* inputs, std::uint32_t n_inputs, bool want_float,
                RknnOutputs* outputs);
 
-  private:
+   private:
     rknn_context                  context_ = nullptr;
     std::vector<rknn_tensor_attr> input_attrs_;
     std::vector<rknn_tensor_attr> output_attrs_;
@@ -93,7 +94,7 @@ class RknnRuntime
 //   - 解码公式见 yolov5_postprocess.h（sigmoid 版本，与 A/B 实际代码差异待板卡实测）。
 class RknnYolov5Model : public IInferenceModel
 {
-  public:
+   public:
     // 构造后稳定；Load 成功后为 manifest.model_id（空则保持默认）。
     const char* Name() const override { return name_.c_str(); }
 
@@ -101,7 +102,7 @@ class RknnYolov5Model : public IInferenceModel
     Status        Infer(const VideoFrame& frame, InferenceResult* result) override;
     ModelManifest Manifest() const override;
 
-  private:
+   private:
     struct HeadInfo
     {
         Yolov5HeadSpec spec;

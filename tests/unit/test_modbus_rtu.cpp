@@ -25,7 +25,8 @@ using animal_monitor::ParseReadHoldingResponse;
 using animal_monitor::Status;
 using animal_monitor::StatusCode;
 
-namespace {
+namespace
+{
 
 // 权威读保持寄存器请求：01 03 00 00 00 0A + CRC（寄存器值 0xCDC5，低字节在前 C5 CD）。
 AM_TEST(build_read_holding_registers_exact_wire_bytes)
@@ -67,9 +68,9 @@ AM_TEST(parse_read_holding_response_ok)
     // 权威响应 CRC：寄存器值 0x605A → 低字节在前 5A 60。
     const std::vector<std::uint8_t> wire = {0x01, 0x03, 0x04, 0x00, 0x0A, 0x01, 0x02, 0x5A, 0x60};
 
-    ModbusFrame            frame;
-    std::string            err;
-    const Status           parse = ParseFrame(wire, &frame, &err);
+    ModbusFrame  frame;
+    std::string  err;
+    const Status parse = ParseFrame(wire, &frame, &err);
     AM_EXPECT(parse.Ok());
     AM_EXPECT_EQ(frame.slave, 0x01u);
     AM_EXPECT_EQ(frame.function, 0x03u);
@@ -97,8 +98,8 @@ AM_TEST(parse_frame_rejects_bad_crc)
 AM_TEST(parse_frame_rejects_short_wire)
 {
     const std::vector<std::uint8_t> wire = {0x01, 0x03, 0x00};
-    ModbusFrame            frame;
-    std::string            err;
+    ModbusFrame                     frame;
+    std::string                     err;
     AM_EXPECT(!ParseFrame(wire, &frame, &err).Ok());
     AM_EXPECT(!err.empty());
 }
@@ -144,7 +145,7 @@ AM_TEST(is_exception_returns_false_for_normal_frame)
 
 AM_TEST(parse_response_rejects_odd_byte_count)
 {
-    const ModbusFrame frame{0x01, 0x03, {0x05, 0x00, 0x01, 0x02, 0x03}};
+    const ModbusFrame          frame{0x01, 0x03, {0x05, 0x00, 0x01, 0x02, 0x03}};
     std::vector<std::uint16_t> registers;
     std::string                err;
     AM_EXPECT(!ParseReadHoldingResponse(frame, &registers, &err).Ok());
@@ -154,7 +155,7 @@ AM_TEST(parse_response_rejects_odd_byte_count)
 AM_TEST(parse_response_rejects_byte_count_mismatch)
 {
     // 字节数声明 4，实际只有 2 字节数据。
-    const ModbusFrame frame{0x01, 0x03, {0x04, 0x00, 0x01}};
+    const ModbusFrame          frame{0x01, 0x03, {0x04, 0x00, 0x01}};
     std::vector<std::uint16_t> registers;
     std::string                err;
     AM_EXPECT(!ParseReadHoldingResponse(frame, &registers, &err).Ok());
@@ -163,7 +164,4 @@ AM_TEST(parse_response_rejects_byte_count_mismatch)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

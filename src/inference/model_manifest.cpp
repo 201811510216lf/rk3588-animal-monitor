@@ -10,9 +10,11 @@
 #include "animal_monitor/common/sha256.h"
 #include "animal_monitor/config/config_loader.h"
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
-namespace {
+namespace
+{
 
 using config::ConfigValue;
 

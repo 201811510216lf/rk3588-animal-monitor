@@ -16,9 +16,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 Status StatusFromErrno(int error, const std::string& what)
 {
@@ -49,13 +51,9 @@ Status StatusFromErrno(int error, const std::string& what)
 
 PwmClient::PwmClient(std::string chip_path, unsigned int channel)
     : chip_path_(std::move(chip_path)), channel_(channel)
-{
-}
+{}
 
-PwmClient::~PwmClient()
-{
-    Close();
-}
+PwmClient::~PwmClient() { Close(); }
 
 Status PwmClient::Open()
 {
@@ -68,7 +66,7 @@ Status PwmClient::Open()
         return Status(StatusCode::kInvalidArgument, "PWM chip 路径为空");
     }
 
-    pwm_path_ = chip_path_ + "/pwm" + std::to_string(channel_);
+    pwm_path_                     = chip_path_ + "/pwm" + std::to_string(channel_);
     const std::string export_path = chip_path_ + "/export";
 
     const int fd = ::open(export_path.c_str(), O_WRONLY | O_CLOEXEC);

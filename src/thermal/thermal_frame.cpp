@@ -9,9 +9,11 @@
 #include <cmath>
 #include <cstddef>
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 // 像素有效温度范围（°C）：器件目标物量程 -40..300，留 100 余量。
 // 仅用于统计有效性判断，不是标定值（UNVERIFIED：以数据手册量程为准）。

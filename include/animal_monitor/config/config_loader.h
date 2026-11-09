@@ -7,7 +7,8 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor::config {
+namespace animal_monitor::config
+{
 
 enum class ConfigValueType
 {
@@ -25,12 +26,12 @@ enum class ConfigValueType
 // 后续替换为 yaml-cpp 时保持本接口不变。
 class ConfigValue
 {
-  public:
+   public:
     ConfigValueType Type() const { return type_; }
-    bool IsPending() const { return type_ == ConfigValueType::kPending; }
-    bool IsScalar() const { return type_ == ConfigValueType::kScalar; }
-    bool IsMap() const { return type_ == ConfigValueType::kMap; }
-    bool IsSequence() const { return type_ == ConfigValueType::kSequence; }
+    bool            IsPending() const { return type_ == ConfigValueType::kPending; }
+    bool            IsScalar() const { return type_ == ConfigValueType::kScalar; }
+    bool            IsMap() const { return type_ == ConfigValueType::kMap; }
+    bool            IsSequence() const { return type_ == ConfigValueType::kSequence; }
 
     // ---- 标量 ----
     const std::string& Scalar() const;
@@ -39,13 +40,13 @@ class ConfigValue
     bool               AsDouble(double* out) const;
 
     // ---- map ----
-    bool                                    HasKey(const std::string& key) const;
-    const ConfigValue*                      Find(const std::string& key) const;
+    bool                                      HasKey(const std::string& key) const;
+    const ConfigValue*                        Find(const std::string& key) const;
     const std::map<std::string, ConfigValue>& Map() const;
 
     // ---- sequence ----
-    const std::vector<ConfigValue>&       Sequence() const;
-    std::vector<ConfigValue>&             Sequence();  // 非 const 访问（解析器/测试使用）
+    const std::vector<ConfigValue>& Sequence() const;
+    std::vector<ConfigValue>&       Sequence();  // 非 const 访问（解析器/测试使用）
 
     // ---- 构造（解析器与测试使用） ----
     static ConfigValue MakeScalar(std::string value);
@@ -62,17 +63,17 @@ class ConfigValue
     // （子集语义："key:" 无子项 = 空映射）。
     void FinalizePending();
 
-  private:
-    ConfigValueType                     type_ = ConfigValueType::kPending;
-    std::string                         scalar_;
-    std::vector<ConfigValue>            sequence_;
-    std::map<std::string, ConfigValue>  map_;
+   private:
+    ConfigValueType                    type_ = ConfigValueType::kPending;
+    std::string                        scalar_;
+    std::vector<ConfigValue>           sequence_;
+    std::map<std::string, ConfigValue> map_;
 };
 
 // YAML 子集解析。错误以 Status 返回，消息包含行号。
 class ConfigLoader
 {
-  public:
+   public:
     static Status LoadFromFile(const std::string& path, ConfigValue* root);
     static Status ParseString(const std::string& text, ConfigValue* root);
 };
@@ -80,7 +81,7 @@ class ConfigLoader
 // 配置校验：检查必需键与关键类型。错误明细通过 problems 返回。
 class ConfigValidator
 {
-  public:
+   public:
     static Status Validate(const ConfigValue& root, std::string* problems);
 };
 

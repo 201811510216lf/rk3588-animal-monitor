@@ -21,16 +21,17 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 class Htu21dClient
 {
-  public:
+   public:
     // iio_device_name：IIO 设备名（如 "iio:device0"），实际编号由内核导出顺序决定，
     // 不硬编码默认值（板卡配置指定）。
     explicit Htu21dClient(std::string iio_device_name);
 
-    Htu21dClient(const Htu21dClient&) = delete;
+    Htu21dClient(const Htu21dClient&)            = delete;
     Htu21dClient& operator=(const Htu21dClient&) = delete;
 
     // 读取一次温湿度样本：temp_c（°C）、rh_pct（%RH）。
@@ -38,7 +39,7 @@ class Htu21dClient
 
     const std::string& DeviceName() const { return iio_device_name_; }
 
-  private:
+   private:
     std::string iio_device_name_;
     std::string base_path_;  // /sys/bus/iio/devices/<name>
 };

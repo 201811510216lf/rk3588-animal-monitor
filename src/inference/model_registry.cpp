@@ -5,9 +5,11 @@
 #include <filesystem>
 #include <system_error>
 
-namespace animal_monitor::inference {
+namespace animal_monitor::inference
+{
 
-namespace {
+namespace
+{
 
 // 模型状态常量（状态表供应用打印，见 src/inference/README.md）。
 constexpr char kStatusOk[]              = "ok";

@@ -4,21 +4,19 @@
 
 #include "animal_monitor/common/bounded_queue.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 class MockVideoEncoder::Impl
 {
-  public:
-    BoundedQueue<EncodedPacket> packets{8,
-                                        BoundedQueue<EncodedPacket>::PushPolicy::kDropOldest};
+   public:
+    BoundedQueue<EncodedPacket> packets{8, BoundedQueue<EncodedPacket>::PushPolicy::kDropOldest};
     std::atomic<std::uint64_t>  encoded{0};
     std::uint32_t               width  = 0;
     std::uint32_t               height = 0;
 };
 
-MockVideoEncoder::MockVideoEncoder() : impl_(std::make_unique<Impl>())
-{
-}
+MockVideoEncoder::MockVideoEncoder() : impl_(std::make_unique<Impl>()) {}
 
 MockVideoEncoder::~MockVideoEncoder() = default;
 

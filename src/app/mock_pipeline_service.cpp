@@ -7,30 +7,24 @@
 #include "animal_monitor/logging/logger.h"
 #include "animal_monitor/metrics/metrics.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // 队列放在 Impl 中，避免把模板细节泄漏到头文件。
 class MockPipelineService::Impl
 {
-  public:
+   public:
     BoundedQueue<FrameMeta> queue{8, BoundedQueue<FrameMeta>::PushPolicy::kDropOldest};
 };
 
 MockPipelineService::MockPipelineService(std::chrono::milliseconds producer_interval,
                                          std::chrono::milliseconds duration)
     : producer_interval_(producer_interval), duration_(duration), impl_(std::make_unique<Impl>())
-{
-}
+{}
 
-MockPipelineService::~MockPipelineService()
-{
-    Stop();
-}
+MockPipelineService::~MockPipelineService() { Stop(); }
 
-const char* MockPipelineService::Name() const
-{
-    return "mock_pipeline";
-}
+const char* MockPipelineService::Name() const { return "mock_pipeline"; }
 
 Status MockPipelineService::Start()
 {
@@ -71,9 +65,8 @@ MockPipelineService::Snapshot MockPipelineService::GetSnapshot() const
 
 void MockPipelineService::ProducerLoop()
 {
-    const auto deadline =
-        std::chrono::steady_clock::now() +
-        (duration_.count() > 0 ? duration_ : std::chrono::hours(24 * 365));
+    const auto deadline = std::chrono::steady_clock::now() +
+                          (duration_.count() > 0 ? duration_ : std::chrono::hours(24 * 365));
 
     FrameMeta frame;
     frame.format = PixelFormat::kUnknown;  // MOCK 帧，无真实像素数据
@@ -84,7 +77,7 @@ void MockPipelineService::ProducerLoop()
         {
             break;
         }
-        frame.id.sequence          = produced_.load(std::memory_order_relaxed);
+        frame.id.sequence = produced_.load(std::memory_order_relaxed);
         frame.timestamps.monotonic_ns =
             static_cast<std::int64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
                                           std::chrono::steady_clock::now().time_since_epoch())

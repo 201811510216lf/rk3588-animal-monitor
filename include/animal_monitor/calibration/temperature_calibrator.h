@@ -17,7 +17,8 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor::calibration {
+namespace animal_monitor::calibration
+{
 
 // 线性标定参数：校正值 = gain * raw_c + offset_c。
 struct LinearCalibration
@@ -33,7 +34,7 @@ float ApplyCalibration(float raw_c, const LinearCalibration& cal);
 // 约束：至少 2 对；原始读数不全相同（否则增益奇异）；任一数值非有限均拒绝。
 // 失败返回 kInvalidArgument；out 必须非空。
 Status FitCalibrationFromPairs(const std::vector<std::pair<float, float>>& reference_pairs,
-                               LinearCalibration* out);
+                               LinearCalibration*                          out);
 
 // 拟合质量指标。
 struct CalibrationQuality
@@ -45,6 +46,6 @@ struct CalibrationQuality
 // 对给定数据对评估标定质量；空输入返回 {0, 0}。数据中含非有限值时结果未定义
 // （调用方应保证输入为实测有效值）。
 CalibrationQuality EvaluateCalibration(const std::vector<std::pair<float, float>>& reference_pairs,
-                                       const LinearCalibration& cal);
+                                       const LinearCalibration&                    cal);
 
 }  // namespace animal_monitor::calibration

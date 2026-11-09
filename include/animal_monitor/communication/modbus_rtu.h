@@ -16,14 +16,15 @@
 
 #include "animal_monitor/common/status.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
 // Modbus RTU 应用层帧视图：data 为 PDU 数据区（不含 CRC）。
 // slave == 0 表示广播地址，仅允许出现在请求方向；响应帧的从站地址不得为 0。
 struct ModbusFrame
 {
-    std::uint8_t           slave    = 0;
-    std::uint8_t           function = 0;
+    std::uint8_t              slave    = 0;
+    std::uint8_t              function = 0;
     std::vector<std::uint8_t> data;
 };
 

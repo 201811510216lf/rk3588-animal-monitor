@@ -8,7 +8,8 @@
 
 using animal_monitor::BoundedQueue;
 
-namespace {
+namespace
+{
 
 using namespace std::chrono_literals;
 
@@ -77,9 +78,7 @@ AM_TEST(block_policy_wakes_on_pop)
     AM_EXPECT(queue.TryPush(1));
 
     std::atomic<bool> pushed{false};
-    std::thread       pusher([&queue, &pushed] {
-        pushed.store(queue.Push(2, 1s));
-    });
+    std::thread       pusher([&queue, &pushed] { pushed.store(queue.Push(2, 1s)); });
 
     std::this_thread::sleep_for(50ms);
     int value = 0;
@@ -118,12 +117,14 @@ AM_TEST(close_wakes_waiters_and_drains)
     AM_EXPECT(queue.TryPush(1));
     AM_EXPECT(queue.TryPush(2));
 
-    std::thread popper([&queue] {
-        int value = 0;
-        while (queue.Pop(value, 10s))
+    std::thread popper(
+        [&queue]
         {
-        }
-    });
+            int value = 0;
+            while (queue.Pop(value, 10s))
+            {
+            }
+        });
 
     std::this_thread::sleep_for(50ms);
     queue.Close();
@@ -144,7 +145,4 @@ AM_TEST(capacity_zero_falls_back_to_one)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

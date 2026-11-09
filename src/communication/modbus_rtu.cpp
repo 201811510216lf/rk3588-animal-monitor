@@ -14,9 +14,11 @@
 
 #include "animal_monitor/common/modbus_crc.h"
 
-namespace animal_monitor {
+namespace animal_monitor
+{
 
-namespace {
+namespace
+{
 
 constexpr std::uint8_t kReadHoldingRegisters = 0x03;
 constexpr std::uint8_t kWriteSingleRegister  = 0x06;

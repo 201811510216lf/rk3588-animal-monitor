@@ -9,7 +9,8 @@ using animal_monitor::AppendModbusCrc;
 using animal_monitor::ModbusCrc16;
 using animal_monitor::VerifyModbusCrc;
 
-namespace {
+namespace
+{
 
 // 权威测试向量（两处独立锚点）：
 // 1) CRC-16/MODBUS 目录校验值："123456789" 的 CRC = 0x4B37；
@@ -25,7 +26,7 @@ AM_TEST(known_vector_read_holding_registers)
 
 AM_TEST(canonical_crc_catalogue_check_value)
 {
-    const std::string text("123456789");
+    const std::string               text("123456789");
     const std::vector<std::uint8_t> frame(text.begin(), text.end());
     AM_EXPECT_EQ(ModbusCrc16(frame), 0x4B37u);
 }
@@ -49,10 +50,7 @@ AM_TEST(verify_round_trip)
     AM_EXPECT(!VerifyModbusCrc(frame));
 }
 
-AM_TEST(empty_frame_crc_is_initial_value)
-{
-    AM_EXPECT_EQ(ModbusCrc16(nullptr, 0), 0xFFFFu);
-}
+AM_TEST(empty_frame_crc_is_initial_value) { AM_EXPECT_EQ(ModbusCrc16(nullptr, 0), 0xFFFFu); }
 
 AM_TEST(short_frame_verify_returns_false)
 {
@@ -65,7 +63,4 @@ AM_TEST(short_frame_verify_returns_false)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }
