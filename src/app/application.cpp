@@ -14,6 +14,7 @@
 #endif
 
 #include "animal_monitor/app/mock_pipeline_service.h"
+#include "animal_monitor/app/video_pipeline_service.h"
 #include "animal_monitor/common/status.h"
 #include "animal_monitor/logging/logger.h"
 
@@ -99,18 +100,10 @@ Status Application::Initialize()
 
 Status Application::RegisterServices()
 {
-    const config::ConfigValue* app = config_root_.Find("app");
+    const config::ConfigValue* app  = config_root_.Find("app");
     const config::ConfigValue* mock = app != nullptr ? app->Find("mock_pipeline") : nullptr;
-
-    bool mock_enabled = false;
-    if (mock != nullptr)
-    {
-        const config::ConfigValue* enabled = mock->Find("enabled");
-        if (enabled != nullptr)
-        {
-            enabled->AsBool(&mock_enabled);
-        }
-    }
+    const config::ConfigValue* pipeline =
+        app != nullptr ? app->Find("video_pipeline") : nullptr;
 
     // 自动退出时长（演示/自测用；0 = 一直运行直到收到退出信号）
     if (app != nullptr)
@@ -122,7 +115,39 @@ Status Application::RegisterServices()
         }
     }
 
+    // 视频流水线（composite 默认链路：双路源→同步→合成→编码→发布）。
+    bool pipeline_enabled = false;
+    if (pipeline != nullptr)
+    {
+        const config::ConfigValue* enabled = pipeline->Find("enabled");
+        if (enabled != nullptr)
+        {
+            enabled->AsBool(&pipeline_enabled);
+        }
+    }
+    if (pipeline_enabled)
+    {
+        std::unique_ptr<VideoPipelineService> service;
+        const Status status = VideoPipelineService::BuildFromConfig(config_root_, &service);
+        if (!status)
+        {
+            AM_LOG_ERROR() << "video_pipeline build failed: " << status.ToString();
+            return status;
+        }
+        services_.push_back(std::move(service));
+        service_notes_.push_back("composite 链路（host=MOCK 源/编码/发布；目标板=V4L2/MPP/RGA/ZLM）");
+    }
+
     // MOCK 流水线：仅验证基础设施接线，不代表任何真实视频/推理能力。
+    bool mock_enabled = false;
+    if (mock != nullptr)
+    {
+        const config::ConfigValue* enabled = mock->Find("enabled");
+        if (enabled != nullptr)
+        {
+            enabled->AsBool(&mock_enabled);
+        }
+    }
     if (mock_enabled)
     {
         std::int64_t producer_ms = 33;
@@ -145,7 +170,7 @@ Status Application::RegisterServices()
         service_notes_.push_back("MOCK：合成 FrameMeta 经有界队列流转，无真实硬件/像素");
     }
 
-    // 其余服务（camera_service / video_pipeline / inference_service ...）随 Phase 2+ 注册。
+    // 其余服务（inference_service / thermal_service ...）随 Phase 3/4 注册。
     return Status::MakeOk();
 }
 
@@ -243,6 +268,19 @@ int Application::Run()
                 AM_LOG_INFO() << "mock_pipeline stats: produced=" << stats.produced
                               << " consumed=" << stats.consumed << " dropped=" << stats.dropped
                               << " queue_left=" << stats.queue_size;
+            }
+            const auto* pipeline = dynamic_cast<VideoPipelineService*>(service);
+            if (pipeline != nullptr)
+            {
+                const auto stats = pipeline->GetSnapshot();
+                AM_LOG_INFO() << "video_pipeline stats: pairs=" << stats.sync.pairs
+                              << " desync_drops=" << stats.sync.desync_drops
+                              << " composed=" << stats.composed
+                              << " encoded=" << stats.encoded
+                              << " published_packets=" << stats.published_packets
+                              << " published_bytes=" << stats.published_bytes
+                              << " encode_errors=" << stats.encode_errors
+                              << " compose_errors=" << stats.compose_errors;
             }
         }
     }

@@ -20,3 +20,11 @@ add_test(NAME test_config COMMAND test_config)
 add_executable(test_metrics unit/test_metrics.cpp)
 target_link_libraries(test_metrics PRIVATE animal_monitor_core)
 add_test(NAME test_metrics COMMAND test_metrics)
+
+add_executable(test_frame_synchronizer unit/test_frame_synchronizer.cpp)
+target_link_libraries(test_frame_synchronizer PRIVATE animal_monitor_core)
+add_test(NAME test_frame_synchronizer COMMAND test_frame_synchronizer)
+
+add_executable(test_frame_compositor unit/test_frame_compositor.cpp)
+target_link_libraries(test_frame_compositor PRIVATE animal_monitor_core)
+add_test(NAME test_frame_compositor COMMAND test_frame_compositor)

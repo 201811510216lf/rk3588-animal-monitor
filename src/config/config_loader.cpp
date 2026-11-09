@@ -506,6 +506,18 @@ Status ConfigValidator::Validate(const ConfigValue& root, std::string* problems)
             if (entry == nullptr || !entry->IsMap())
             {
                 issues << "cameras." << cam << " must be a mapping; ";
+                continue;
+            }
+            const ConfigValue* source = entry->Find("source");
+            if (source == nullptr || !source->IsScalar())
+            {
+                issues << "cameras." << cam << ".source must be a scalar (mock|v4l2); ";
+            }
+            else if (source->Scalar() != "mock" && source->Scalar() != "v4l2")
+            {
+                issues << "cameras." << cam
+                       << ".source must be 'mock' or 'v4l2' (got '" << source->Scalar()
+                       << "'); ";
             }
         }
     }
@@ -528,18 +540,38 @@ Status ConfigValidator::Validate(const ConfigValue& root, std::string* problems)
     const ConfigValue* app = root.Find("app");
     if (app != nullptr && app->IsMap())
     {
-        const ConfigValue* mock = app->Find("mock_pipeline");
-        if (mock == nullptr || !mock->IsMap())
+        // 必需：video_pipeline（Phase 2 composite 链路开关）
+        const ConfigValue* pipeline = app->Find("video_pipeline");
+        if (pipeline == nullptr || !pipeline->IsMap())
         {
-            issues << "app.mock_pipeline must be a mapping; ";
+            issues << "app.video_pipeline must be a mapping; ";
         }
         else
         {
-            const ConfigValue* enabled = mock->Find("enabled");
+            const ConfigValue* enabled = pipeline->Find("enabled");
             bool               value   = false;
             if (enabled == nullptr || !enabled->AsBool(&value))
             {
-                issues << "app.mock_pipeline.enabled must be true/false; ";
+                issues << "app.video_pipeline.enabled must be true/false; ";
+            }
+        }
+
+        // 可选：mock_pipeline（存在则校验）
+        const ConfigValue* mock = app->Find("mock_pipeline");
+        if (mock != nullptr)
+        {
+            if (!mock->IsMap())
+            {
+                issues << "app.mock_pipeline must be a mapping; ";
+            }
+            else
+            {
+                const ConfigValue* enabled = mock->Find("enabled");
+                bool               value   = false;
+                if (enabled == nullptr || !enabled->AsBool(&value))
+                {
+                    issues << "app.mock_pipeline.enabled must be true/false; ";
+                }
             }
         }
     }

@@ -5,42 +5,48 @@
 board_profile: generic-rk3588   # 见 configs/boards/
 
 # ---------------------------------------------------------------
-# 双路相机（Sensor 型号未定；device 路径与格式以实际板卡 BSP 为准）
+# 双路相机（Sensor 型号未定；source=mock 为 host 演示，v4l2 为目标板）
 # ---------------------------------------------------------------
 cameras:
   camera0:
-    device: /dev/video0        # UNVERIFIED
-    width: 1920                # UNVERIFIED
-    height: 1080               # UNVERIFIED
-    fps: 30                    # UNVERIFIED
-    pixel_format: nv12         # UNVERIFIED：MIPI/ISP 输出格式以 BSP 为准
-    exposure_us: 0             # 0 = 自动曝光
-  camera1:
-    device: /dev/video1        # UNVERIFIED
-    width: 1920
-    height: 1080
+    source: mock               # mock | v4l2（v4l2 需目标构建，UNVERIFIED）
+    device: /dev/video0        # UNVERIFIED（仅 v4l2 源使用）
+    width: 640
+    height: 480
     fps: 30
-    pixel_format: nv12
+    pixel_format: bgr888       # mock 源输出 BGR888；v4l2 源 UNVERIFIED
+    exposure_us: 0             # 0 = 自动曝光
+    duration_ms: 0             # mock 源运行时长（0=无限）
+  camera1:
+    source: mock
+    device: /dev/video1        # UNVERIFIED
+    width: 640
+    height: 480
+    fps: 30
+    pixel_format: bgr888
     exposure_us: 0
+    duration_ms: 0
 
 # ---------------------------------------------------------------
 # 双画面合成与同步
 # ---------------------------------------------------------------
 composition:
   mode: composite              # composite | independent | single
-  layout: side_by_side         # side_by_side | top_bottom | grid
-  output_width: 1920
-  output_height: 1080
+  layout: side_by_side         # side_by_side | top_bottom
+  output_width: 1280
+  output_height: 720
+  gap_px: 0
   sync_tolerance_ms: 40        # 双路时间戳最大容差
   sync_policy: drop_oldest     # 超容差时丢弃旧帧（配合 timestamp_aligner）
+  queue_capacity: 8            # 每路同步队列容量
 
 # ---------------------------------------------------------------
 # 编码
 # ---------------------------------------------------------------
 encoder:
   codec: h264                  # h264 | h265
-  width: 1920
-  height: 1080
+  width: 1280                  # 与合成输出一致
+  height: 720
   fps: 30
   bitrate_bps: 2000000
   gop: 60
@@ -180,8 +186,10 @@ queues:
 # 应用
 # ---------------------------------------------------------------
 app:
-  run_duration_ms: 2000        # 演示自动退出时长（0 = 一直运行直到退出信号）
-  mock_pipeline:               # 明确标注的 MOCK：仅验证基础设施接线，无真实硬件
+  run_duration_ms: 3000        # 演示自动退出时长（0 = 一直运行直到退出信号）
+  video_pipeline:              # composite 默认链路（Phase 2；host=MOCK，目标板=V4L2/MPP/RGA/ZLM）
     enabled: true
+  mock_pipeline:               # 明确标注的 MOCK：仅验证基础设施接线，无真实硬件
+    enabled: false
     producer_interval_ms: 10
     duration_ms: 500           # 0 = 无限（Ctrl+C 退出）

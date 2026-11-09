@@ -14,11 +14,13 @@ board_profile: generic-rk3588
 
 cameras:
   camera0:
+    source: mock
     device: /dev/video0
     width: 1920
     height: 1080
     fps: 30
   camera1:
+    source: mock
     device: /dev/video1
     width: 1920
     height: 1080
@@ -62,6 +64,8 @@ queues:
   default_capacity: 8
 
 app:
+  video_pipeline:
+    enabled: true
   mock_pipeline:
     enabled: true
     producer_interval_ms: 10

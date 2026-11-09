@@ -55,6 +55,12 @@ add_library(animal_monitor_core STATIC
     src/logging/logger.cpp
     src/metrics/metrics.cpp
     src/config/config_loader.cpp
+    # Phase 2 可移植核心（host 可编译）
+    src/media/frame_synchronizer.cpp
+    src/media/frame_compositor.cpp
+    src/media/mock_video_source.cpp
+    src/media/mock_video_encoder.cpp
+    src/media/null_video_publisher.cpp
 )
 
 target_include_directories(animal_monitor_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -67,6 +73,8 @@ add_executable(animal_monitor_app
     src/main.cpp
     src/app/application.cpp
     src/app/mock_pipeline_service.cpp
+    src/app/video_pipeline_service.cpp
+    src/app/pipeline_factory_host.cpp
 )
 target_link_libraries(animal_monitor_app PRIVATE animal_monitor_core)
 
@@ -75,10 +83,45 @@ target_link_libraries(animal_monitor_app PRIVATE animal_monitor_core)
 # ============================================================
 if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
     find_package(RockchipMPP REQUIRED)
-    target_link_libraries(animal_monitor_app PRIVATE RockchipMPP::rockchip_mpp)
-    target_compile_definitions(animal_monitor_app PRIVATE ANIMAL_MONITOR_HAS_MPP=1)
-    # RGA / RKNN / ZLMediaKit 的 Find 模块将在对应 Phase 迁移时补充（cmake/ 下预留）
-    message(STATUS "Target deps enabled: RockchipMPP found at ${ROCKCHIP_MPP_INCLUDE_DIR}")
+    find_package(RockchipRGA REQUIRED)
+    find_package(Rknn REQUIRED)
+    find_package(Zlm REQUIRED)
+
+    # Phase 2 目标板媒体适配器（V4L2/MPP/RGA/ZLM；未经板卡编译验证）
+    target_sources(animal_monitor_core PRIVATE
+        src/camera/v4l2_camera.cpp
+        src/media/mpp_decoder.cpp
+        src/media/mpp_encoder.cpp
+        src/media/rga_processor.cpp
+        src/media/stream_publisher.cpp
+        src/media/dma_heap_allocator.cpp
+    )
+    # Phase 3 目标板推理运行时
+    target_sources(animal_monitor_core PRIVATE
+        src/inference/rknn_runtime.cpp
+    )
+    # Phase 4 传感器客户端（目标板）
+    target_sources(animal_monitor_core PRIVATE
+        src/thermal/mlx90640_client.cpp
+        src/environment/htu21d_client.cpp
+    )
+    # 目标板流水线工厂（真实 V4L2/MPP/ZLM 实现）
+    target_sources(animal_monitor_app PRIVATE src/app/pipeline_factory_target.cpp)
+
+    target_link_libraries(animal_monitor_core PUBLIC
+        RockchipMPP::rockchip_mpp
+        RockchipRGA::librga
+        Rknn::rknnrt
+    )
+    target_link_libraries(animal_monitor_app PRIVATE
+        Zlm::mk_api
+        Zlm::ZLToolKit
+        v4l2
+    )
+    target_compile_definitions(animal_monitor_app PRIVATE ANIMAL_MONITOR_HAS_TARGET_DEPS=1)
+    message(STATUS "Target deps enabled: MPP=${ROCKCHIP_MPP_INCLUDE_DIR} "
+                   "RGA=${ROCKCHIP_RGA_INCLUDE_DIR} RKNN=${RKNN_INCLUDE_DIR} "
+                   "ZLM=${ZLM_INCLUDE_DIR}")
 endif()
 
 # ============================================================
