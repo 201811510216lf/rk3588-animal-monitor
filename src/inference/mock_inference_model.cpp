@@ -6,7 +6,7 @@ namespace animal_monitor::inference {
 
 namespace {
 
-constexpr float       kMockConfidence = 0.9f;
+constexpr float       kMockConfidence        = 0.9f;
 constexpr std::size_t kMockDefaultClassCount = 3;
 
 }  // namespace
@@ -46,8 +46,8 @@ Status MockInferenceModel::Infer(const VideoFrame& frame, InferenceResult* resul
         }
         Detection detection;
         detection.class_id = static_cast<std::int32_t>(frame.meta.id.sequence % class_count);
-        detection.bbox     = Detection::Bbox{width * 0.375f, height * 0.375f, width * 0.25f,
-                                             height * 0.25f};
+        detection.bbox =
+            Detection::Bbox{width * 0.375f, height * 0.375f, width * 0.25f, height * 0.25f};
         detection.confidence = kMockConfidence;
         result->detections.push_back(detection);
     }

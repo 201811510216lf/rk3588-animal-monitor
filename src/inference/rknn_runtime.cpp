@@ -16,8 +16,8 @@ namespace animal_monitor::inference {
 namespace {
 
 // yolov5s 标准锚点（A/B 实测使用，COCO 训练尺寸；UNVERIFIED：板卡实测确认）。
-constexpr std::array<float, 6> kAnchorsStride8  = {10.0f,  13.0f, 16.0f, 30.0f, 33.0f,  23.0f};
-constexpr std::array<float, 6> kAnchorsStride16 = {30.0f,  61.0f, 62.0f, 45.0f, 59.0f,  119.0f};
+constexpr std::array<float, 6> kAnchorsStride8  = {10.0f, 13.0f, 16.0f, 30.0f, 33.0f, 23.0f};
+constexpr std::array<float, 6> kAnchorsStride16 = {30.0f, 61.0f, 62.0f, 45.0f, 59.0f, 119.0f};
 constexpr std::array<float, 6> kAnchorsStride32 = {116.0f, 90.0f, 156.0f, 198.0f, 373.0f, 326.0f};
 
 constexpr std::array<int, 3> kSupportedStrides = {8, 16, 32};
@@ -53,8 +53,8 @@ Status ReadFileBinary(const std::string& path, std::vector<std::uint8_t>* out)
 // 双线性拉伸 RGB888（无 letterbox，UNVERIFIED：A/B 用 cv::resize INTER_LINEAR 等效）。
 // bgr_input=true 时同时完成 BGR→RGB 通道交换。
 void StretchRgb888(const std::uint8_t* src, std::size_t src_w, std::size_t src_h,
-                   std::size_t src_row_stride, bool bgr_input, std::uint8_t* dst,
-                   std::size_t dst_w, std::size_t dst_h)
+                   std::size_t src_row_stride, bool bgr_input, std::uint8_t* dst, std::size_t dst_w,
+                   std::size_t dst_h)
 {
     for (std::size_t dy = 0; dy < dst_h; ++dy)
     {
@@ -77,15 +77,15 @@ void StretchRgb888(const std::uint8_t* src, std::size_t src_w, std::size_t src_h
             for (std::size_t c = 0; c < 3; ++c)
             {
                 const std::size_t src_c = bgr_input ? (2 - c) : c;
-                const float       v00   = static_cast<float>(src[y0 * src_row_stride + x0 * 3 + src_c]);
-                const float       v01   = static_cast<float>(src[y0 * src_row_stride + x1 * 3 + src_c]);
-                const float       v10   = static_cast<float>(src[y1 * src_row_stride + x0 * 3 + src_c]);
-                const float       v11   = static_cast<float>(src[y1 * src_row_stride + x1 * 3 + src_c]);
-                const float       top   = v00 * (1.0f - wx) + v01 * wx;
-                const float       bottom = v10 * (1.0f - wx) + v11 * wx;
-                const float       value  = top * (1.0f - wy) + bottom * wy;
-                dst[(dy * dst_w + dx) * 3 + c] = static_cast<std::uint8_t>(
-                    std::max(0.0f, std::min(255.0f, value + 0.5f)));
+                const float v00    = static_cast<float>(src[y0 * src_row_stride + x0 * 3 + src_c]);
+                const float v01    = static_cast<float>(src[y0 * src_row_stride + x1 * 3 + src_c]);
+                const float v10    = static_cast<float>(src[y1 * src_row_stride + x0 * 3 + src_c]);
+                const float v11    = static_cast<float>(src[y1 * src_row_stride + x1 * 3 + src_c]);
+                const float top    = v00 * (1.0f - wx) + v01 * wx;
+                const float bottom = v10 * (1.0f - wx) + v11 * wx;
+                const float value  = top * (1.0f - wy) + bottom * wy;
+                dst[(dy * dst_w + dx) * 3 + c] =
+                    static_cast<std::uint8_t>(std::max(0.0f, std::min(255.0f, value + 0.5f)));
             }
         }
     }
@@ -111,8 +111,8 @@ Status RknnRuntime::InitFromFile(const std::string& model_path, std::uint32_t np
         return status;
     }
 
-    int ret = rknn_init(&context_, model_data.data(), static_cast<uint32_t>(model_data.size()),
-                        0, nullptr);
+    int ret = rknn_init(&context_, model_data.data(), static_cast<uint32_t>(model_data.size()), 0,
+                        nullptr);
     if (ret != RKNN_SUCC)
     {
         context_ = nullptr;
@@ -147,22 +147,24 @@ Status RknnRuntime::InitFromFile(const std::string& model_path, std::uint32_t np
     for (std::uint32_t i = 0; i < io_num.n_input; ++i)
     {
         input_attrs_[i].index = i;
-        ret = rknn_query(context_, RKNN_QUERY_INPUT_ATTR, &input_attrs_[i],
-                         sizeof(rknn_tensor_attr));
+        ret =
+            rknn_query(context_, RKNN_QUERY_INPUT_ATTR, &input_attrs_[i], sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC)
         {
-            return Status(StatusCode::kHardwareUnavailable, RknnError("rknn_query INPUT_ATTR", ret));
+            return Status(StatusCode::kHardwareUnavailable,
+                          RknnError("rknn_query INPUT_ATTR", ret));
         }
     }
     output_attrs_.resize(io_num.n_output);
     for (std::uint32_t i = 0; i < io_num.n_output; ++i)
     {
         output_attrs_[i].index = i;
-        ret = rknn_query(context_, RKNN_QUERY_OUTPUT_ATTR, &output_attrs_[i],
-                         sizeof(rknn_tensor_attr));
+        ret                    = rknn_query(context_, RKNN_QUERY_OUTPUT_ATTR, &output_attrs_[i],
+                                            sizeof(rknn_tensor_attr));
         if (ret != RKNN_SUCC)
         {
-            return Status(StatusCode::kHardwareUnavailable, RknnError("rknn_query OUTPUT_ATTR", ret));
+            return Status(StatusCode::kHardwareUnavailable,
+                          RknnError("rknn_query OUTPUT_ATTR", ret));
         }
     }
     return Status::MakeOk();
@@ -194,12 +196,11 @@ Status RknnRuntime::Run(const rknn_input* inputs, std::uint32_t n_inputs, bool w
     std::vector<rknn_output> outs(output_attrs_.size());
     for (std::size_t i = 0; i < outs.size(); ++i)
     {
-        outs[i] = rknn_output{};
+        outs[i]            = rknn_output{};
         outs[i].index      = static_cast<std::uint32_t>(i);
         outs[i].want_float = want_float ? 1 : 0;
     }
-    ret = rknn_outputs_get(context_, static_cast<std::uint32_t>(outs.size()), outs.data(),
-                           nullptr);
+    ret = rknn_outputs_get(context_, static_cast<std::uint32_t>(outs.size()), outs.data(), nullptr);
     if (ret != RKNN_SUCC)
     {
         return Status(StatusCode::kHardwareUnavailable, RknnError("rknn_outputs_get", ret));
@@ -327,9 +328,8 @@ Status RknnYolov5Model::BuildHeadSpecs()
             {
                 continue;
             }
-            const std::size_t grid_len =
-                (input_height_ / static_cast<std::size_t>(stride)) *
-                (input_width_ / static_cast<std::size_t>(stride));
+            const std::size_t grid_len = (input_height_ / static_cast<std::size_t>(stride)) *
+                                         (input_width_ / static_cast<std::size_t>(stride));
             const std::size_t plane_len = 3 * grid_len;
             const std::size_t size      = output_attrs[o].size;
             if (plane_len == 0 || size % plane_len != 0 || size / plane_len < 6)
@@ -390,12 +390,12 @@ Status RknnYolov5Model::BuildHeadSpecs()
         }
 
         Yolov5HeadSpec spec;
-        spec.stride         = matched_stride;
-        spec.anchors        = anchors;
-        spec.grid_h         = static_cast<int>(input_height_ / static_cast<std::size_t>(matched_stride));
-        spec.grid_w         = static_cast<int>(input_width_ / static_cast<std::size_t>(matched_stride));
-        spec.scale          = output_attrs[o].scale;
-        spec.zp             = output_attrs[o].zp;
+        spec.stride  = matched_stride;
+        spec.anchors = anchors;
+        spec.grid_h  = static_cast<int>(input_height_ / static_cast<std::size_t>(matched_stride));
+        spec.grid_w  = static_cast<int>(input_width_ / static_cast<std::size_t>(matched_stride));
+        spec.scale   = output_attrs[o].scale;
+        spec.zp      = output_attrs[o].zp;
         spec.conf_threshold = static_cast<float>(manifest_.confidence_threshold);
         heads_.push_back(HeadInfo{spec, o});
     }
@@ -447,8 +447,8 @@ Status RknnYolov5Model::Infer(const VideoFrame& frame, InferenceResult* result)
 
     // 预处理：BGR→RGB（如需）+ 双线性拉伸到模型输入尺寸（letterbox=false，UNVERIFIED）。
     std::vector<std::uint8_t> input_buffer(input_height_ * input_width_ * input_channels_);
-    StretchRgb888(frame.planes[0].data, src_w, src_h, src_stride, bgr_input,
-                  input_buffer.data(), input_width_, input_height_);
+    StretchRgb888(frame.planes[0].data, src_w, src_h, src_stride, bgr_input, input_buffer.data(),
+                  input_width_, input_height_);
 
     rknn_input input{};
     input.index        = 0;
@@ -472,15 +472,14 @@ Status RknnYolov5Model::Infer(const VideoFrame& frame, InferenceResult* result)
     for (std::size_t h = 0; h < heads_.size(); ++h)
     {
         const rknn_output& out = outs[heads_[h].output_index];
-        head_data[h] = reinterpret_cast<const std::int8_t*>(out.buf);
-        head_lens[h] = out.size;
-        head_specs[h] = heads_[h].spec;
+        head_data[h]           = reinterpret_cast<const std::int8_t*>(out.buf);
+        head_lens[h]           = out.size;
+        head_specs[h]          = heads_[h].spec;
     }
 
-    const int count = PostprocessYolov5Quantized(head_data.data(), head_lens.data(),
-                                                 head_specs.data(), num_classes_,
-                                                 static_cast<float>(manifest_.nms_threshold),
-                                                 &result->detections);
+    const int count = PostprocessYolov5Quantized(
+        head_data.data(), head_lens.data(), head_specs.data(), num_classes_,
+        static_cast<float>(manifest_.nms_threshold), &result->detections);
     if (count < 0)
     {
         return Status(StatusCode::kInternal, "yolov5 后处理失败（参数或长度校验不通过）");
@@ -491,9 +490,6 @@ Status RknnYolov5Model::Infer(const VideoFrame& frame, InferenceResult* result)
     return Status::MakeOk();
 }
 
-ModelManifest RknnYolov5Model::Manifest() const
-{
-    return manifest_;
-}
+ModelManifest RknnYolov5Model::Manifest() const { return manifest_; }
 
 }  // namespace animal_monitor::inference

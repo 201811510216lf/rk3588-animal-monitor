@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# 状态：implemented（初稿）/ hardware-blocked / UNVERIFIED（未在目标内核编译验证）
+# 依据：任务书 CODEX_MASTER_TASK.md §7.2；README（IIO 路线）
+config HTU21D_IIO
+	tristate "HTU21D humidity/temperature sensor custom IIO driver"
+	depends on I2C
+	depends on IIO
+	help
+	  自定义 HTU21D（Si7021 兼容）温湿度 IIO 驱动（初稿，UNVERIFIED）：
+	  IIO_TEMP / IIO_HUMIDITYRELATIVE 两通道，read_raw 发起单次测量
+	  （no-hold + CRC 校验，失败计数）。
+
+	  注意：主线 hwmon 已有 SENSORS_HTU21（drivers/hwmon/htu21.c，
+	  compatible "meas,htu21d"），与本驱动绑定名相同，二者不要同时启用
+	  （重复设备绑定风险），见 drivers/htu21d/README。DTS 节点待板卡确定后
+	  单独提交，本驱动不含 DTS。

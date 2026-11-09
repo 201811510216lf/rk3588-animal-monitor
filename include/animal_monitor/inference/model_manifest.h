@@ -24,44 +24,44 @@ struct ModelRknnConfig
 {
     std::string  sdk_version    = "UNKNOWN";  // rknn_api 版本（如 1.6.0）
     std::string  driver_version = "UNKNOWN";  // 板上 rknn_server/NPU driver 版本
-    std::int32_t npu_core_mask  = 7;          // RK3588 三核位掩码（core0=1|core1=2|core2=4），实测决定
-    bool         wants_float    = false;      // 是否浮点输出（Phase 3 仅支持 int8 输出）
+    std::int32_t npu_core_mask  = 7;      // RK3588 三核位掩码（core0=1|core1=2|core2=4），实测决定
+    bool         wants_float    = false;  // 是否浮点输出（Phase 3 仅支持 int8 输出）
 };
 
 // manifest.input 条目。
 struct ModelInputSpec
 {
-    std::string              name         = "images";
-    std::vector<std::int64_t> shape;        // 如 [1,640,640,3]；空 = UNKNOWN（以 rknn_query 为准）
-    std::string              layout       = "NHWC";
-    std::string              data_type    = "uint8";
-    std::string              color_format = "RGB";
-    bool                     letterbox    = false;  // false = 直接拉伸（A/B 实测行为）
-    std::vector<double>      mean;                  // Phase 3 未实现归一化；配置非空即报 kUnimplemented
-    std::vector<double>      std;
+    std::string               name = "images";
+    std::vector<std::int64_t> shape;  // 如 [1,640,640,3]；空 = UNKNOWN（以 rknn_query 为准）
+    std::string               layout       = "NHWC";
+    std::string               data_type    = "uint8";
+    std::string               color_format = "RGB";
+    bool                      letterbox    = false;  // false = 直接拉伸（A/B 实测行为）
+    std::vector<double>       mean;  // Phase 3 未实现归一化；配置非空即报 kUnimplemented
+    std::vector<double>       std;
 };
 
 // manifest.output 条目。
 struct ModelOutputSpec
 {
-    std::string               name                 = "output0";
+    std::string               name = "output0";
     std::vector<std::int64_t> shape;  // 空 = UNKNOWN（以 rknn_query 实测为准）
-    std::string               data_type           = "int8";
-    double                    quantization_scale  = 0.0;  // has_* 为 false 表示 UNKNOWN
-    std::int32_t              quantization_zp     = 0;
+    std::string               data_type              = "int8";
+    double                    quantization_scale     = 0.0;  // has_* 为 false 表示 UNKNOWN
+    std::int32_t              quantization_zp        = 0;
     bool                      has_quantization_scale = false;
     bool                      has_quantization_zp    = false;
-    std::string               postprocess         = "UNKNOWN";  // yolov5 | behavior_head | UNKNOWN
+    std::string               postprocess = "UNKNOWN";  // yolov5 | behavior_head | UNKNOWN
 };
 
 // 模型 manifest。对应 model_template.yaml 的全部字段。
 struct ModelManifest
 {
-    std::string model_id;               // 必填，非空
-    std::string model_kind = "UNKNOWN"; // behavior | detector | thermal_supplement
-    std::string task;                   // grooming / feeding / rearing ...
-    std::string file;                   // 模型文件路径（相对进程工作目录解析）
-    std::string sha256;                 // 真实 SHA256（空或 NOT_COMPUTED 表示未提供）
+    std::string model_id;                // 必填，非空
+    std::string model_kind = "UNKNOWN";  // behavior | detector | thermal_supplement
+    std::string task;                    // grooming / feeding / rearing ...
+    std::string file;                    // 模型文件路径（相对进程工作目录解析）
+    std::string sha256;                  // 真实 SHA256（空或 NOT_COMPUTED 表示未提供）
 
     ModelRknnConfig rknn;
 
@@ -70,7 +70,7 @@ struct ModelManifest
     std::vector<std::string>     classes;
 
     double confidence_threshold = 0.25;
-    double nms_threshold         = 0.45;
+    double nms_threshold        = 0.45;
 
     std::string version;
     std::string status = "UNKNOWN";  // 未实测/未确认一律 UNKNOWN

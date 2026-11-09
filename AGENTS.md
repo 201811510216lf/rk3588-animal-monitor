@@ -93,3 +93,18 @@ Use `JoeChen2me/RK-MediaProject` as a style and architecture reference, not as a
 - 示例运行：`build\bin\animal_monitor_app.exe --config configs\default.yaml`
   启动 MOCK 流水线，2 秒自动退出，退出码 0；统计 produced=33 consumed=33 dropped=0 queue_left=0。
 - 未做任何目标板硬件测试（无板卡）；所有硬件项保持 `hardware-blocked` / `UNVERIFIED`。
+
+### Phase 2–6 执行记录（2026-11-09）
+
+- Phase 2（视频链路）：可移植接口与全链路（双路源→FrameSynchronizer→FrameCompositor→
+  编码→发布）主机完成；目标板 V4L2/MPP/RGA/ZLM RAII 适配器已写（UNVERIFIED）。
+- Phase 3（推理）：IInferenceModel/RknnRuntime/yolov5 量化后处理修复版（prop 赋值/按类
+  NMS/无全局态）/ModelRegistry/InferenceScheduler；三行为模型文件仍缺失（仅接口+manifest）。
+- Phase 4（传感器）：MLX90640（cdev，禁 miscdevice）与 HTU21D（IIO）内核 C 驱动初稿 +
+  用户态客户端 + 纯数学；全部 NOT_CALIBRATED/UNVERIFIED。
+- Phase 5（融合）：ROI 映射/温度标定/跟踪/个体基线/异常检测/特征融合（纯逻辑）。
+- Phase 6（外设）：Modbus RTU 编解码/CAN 帧/外设注册表 + CAN/RS485/GPIO/PWM/ADC/RTC/
+  EEPROM/Watchdog 客户端（优先复用内核驱动，UNVERIFIED）。
+- 实测（2026-11-09，cl.exe 直连编译，0 告警）：单元测试 **22/22 套件通过**；
+  composite 流水线 3 秒实测 pairs=66/composed=66/encoded=66/published=66/错误 0。
+  详见 `docs/testing/host_test_report.md`。目标板代码未在板卡编译/验证。

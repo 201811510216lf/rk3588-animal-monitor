@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# 状态：implemented（初稿）/ hardware-blocked / UNVERIFIED（未在目标内核编译验证）
+# 依据：任务书 CODEX_MASTER_TASK.md §7.1；README 接口决策（cdev，禁止 miscdevice）
+config MLX90640
+	tristate "MLX90640 thermal camera custom driver (cdev)"
+	depends on I2C
+	help
+	  自定义 Melexis MLX90640 32x24 红外热成像驱动（初稿，UNVERIFIED）：
+	  标准 i2c_driver + 标准字符设备（cdev，非 miscdevice），每次 read 主动
+	  采集两个 subpage 并交错合并，温度换算在用户态完成。
+
+	  注意：主线内核的 video-i2c 亦提供 MLX90640 支持（V4L2 路线），二者
+	  不要同时绑定同一器件（重复设备绑定风险），见 drivers 目录 README
+	  的接口决策与备选评估。DTS 节点待板卡确定后单独提交，本驱动不含 DTS。

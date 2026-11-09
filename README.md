@@ -24,10 +24,16 @@ RK3588 动物行为识别与红外监测平台（新整合工程）。
 |---|---|---|
 | Phase 0 审计 | 已完成 | 见 `docs/migration/source_audit.md`、`docs/migration/module_mapping.md`、`docs/migration/risk_register.md` |
 | Phase 1 骨架 | 已完成 | host 构建与单元测试通过；不含任何 Rockchip SDK 依赖 |
-| Phase 2~8 | planned | 待用户确认迁移矩阵后继续；不得在确认前迁移大段业务代码 |
+| Phase 2 视频链路 | 主机部分已完成 | 双路源→同步→合成→编码→发布全链路（host=MOCK，目标板=V4L2/MPP/RGA/ZLM 适配器已写、UNVERIFIED） |
+| Phase 3 多模型推理 | 主机部分已完成 | IInferenceModel/RknnRuntime/yolov5 后处理修复版/Registry/Scheduler（目标板部分 UNVERIFIED；三行为模型文件仍缺失） |
+| Phase 4 传感器 | 主机部分已完成 | MLX90640/HTU21D 纯数学+客户端+内核 C 驱动初稿（hardware-blocked/UNVERIFIED） |
+| Phase 5 多模态融合 | 主机部分已完成 | ROI 映射/温度标定/跟踪/个体基线/异常检测/特征融合（NOT_CALIBRATED 标注） |
+| Phase 6 外设扩展 | 主机部分已完成 | Modbus RTU/CAN 帧/外设状态注册表；CAN/RS485/GPIO/PWM/ADC/RTC/EEPROM/WDG 客户端（UNVERIFIED） |
+| Phase 7/8 | planned | 通信/缓存/OTA、集成与长稳 |
 
-Phase 1 实测（2026-11-06）：MSVC 19.44 编译 0 告警；ctest 5/5 通过；示例运行退出码 0
-（详见 `docs/deployment/build_host.md`）。
+实测（2026-11-09）：主机源码 0 告警编译；单元测试 **22/22 套件通过**；composite 流水线
+3 秒实测 66 对帧零错误。详见 `docs/testing/host_test_report.md`。
+目标板代码一律 `UNVERIFIED`，未声称任何硬件功能已实测。
 
 各功能模块状态一律标注 `implemented` / `stub` / `planned` / `hardware-blocked`；
 未经真实板卡实测的硬件功能一律标注 `UNVERIFIED`。

@@ -58,8 +58,8 @@ class InferenceScheduler
     {
         std::uint64_t                       submitted     = 0;  // 受理的提交数（含去重命中）
         std::uint64_t                       dedup_skipped = 0;  // frame_id 去重跳过次数
-        std::uint64_t                       dropped       = 0;  // 结果队列满丢弃（drop_oldest 换出）
-        std::map<std::string, ModelMetrics> per_model;         // 键 = 模型 Name()
+        std::uint64_t                       dropped = 0;  // 结果队列满丢弃（drop_oldest 换出）
+        std::map<std::string, ModelMetrics> per_model;    // 键 = 模型 Name()
     };
 
     // models 可为空（Submit 将返回 kConfigurationError）。
@@ -85,15 +85,15 @@ class InferenceScheduler
   private:
     std::size_t RouteLocked(std::uint32_t camera_id);  // 调用方须持有 state_mutex_
 
-    ScheduleStrategy                  strategy_;
-    std::vector<IInferenceModel*>     models_;
-    Options                           options_;
-    BoundedQueue<InferenceResult>     results_;
-    std::atomic<bool>                 closed_{false};
-    mutable std::mutex                state_mutex_;
-    std::uint64_t                     round_robin_counter_ = 0;
-    std::map<std::uint32_t, FrameId>  last_frame_by_camera_;  // 每路最近提交的 frame_id
-    Metrics                           metrics_;
+    ScheduleStrategy                 strategy_;
+    std::vector<IInferenceModel*>    models_;
+    Options                          options_;
+    BoundedQueue<InferenceResult>    results_;
+    std::atomic<bool>                closed_{false};
+    mutable std::mutex               state_mutex_;
+    std::uint64_t                    round_robin_counter_ = 0;
+    std::map<std::uint32_t, FrameId> last_frame_by_camera_;  // 每路最近提交的 frame_id
+    Metrics                          metrics_;
 };
 
 }  // namespace animal_monitor::inference

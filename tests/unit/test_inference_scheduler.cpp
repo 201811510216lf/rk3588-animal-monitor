@@ -79,7 +79,7 @@ AM_TEST(dedup_skips_duplicate_frame)
 
 AM_TEST(bounded_queue_drops_oldest_results)
 {
-    MockInferenceModel model("mock_drop");
+    MockInferenceModel          model("mock_drop");
     InferenceScheduler::Options options;
     options.result_queue_capacity = 2;
     InferenceScheduler scheduler(ScheduleStrategy::kRoundRobin, {&model}, options);
@@ -139,7 +139,8 @@ AM_TEST(empty_models_rejected)
 {
     InferenceScheduler scheduler(ScheduleStrategy::kRoundRobin, {});
     const Status       status = scheduler.Submit(MakeFrame(0, 0), 0);
-    AM_EXPECT_EQ(static_cast<int>(status.Code()), static_cast<int>(StatusCode::kConfigurationError));
+    AM_EXPECT_EQ(static_cast<int>(status.Code()),
+                 static_cast<int>(StatusCode::kConfigurationError));
 }
 
 AM_TEST(close_blocks_submit_and_drains_queue)
@@ -180,7 +181,4 @@ AM_TEST(metrics_count_per_model)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

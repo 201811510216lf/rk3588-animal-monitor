@@ -28,3 +28,63 @@ add_test(NAME test_frame_synchronizer COMMAND test_frame_synchronizer)
 add_executable(test_frame_compositor unit/test_frame_compositor.cpp)
 target_link_libraries(test_frame_compositor PRIVATE animal_monitor_core)
 add_test(NAME test_frame_compositor COMMAND test_frame_compositor)
+
+add_executable(test_sha256 unit/test_sha256.cpp)
+target_link_libraries(test_sha256 PRIVATE animal_monitor_core)
+add_test(NAME test_sha256 COMMAND test_sha256)
+
+add_executable(test_yolov5_postprocess unit/test_yolov5_postprocess.cpp)
+target_link_libraries(test_yolov5_postprocess PRIVATE animal_monitor_core)
+add_test(NAME test_yolov5_postprocess COMMAND test_yolov5_postprocess)
+
+add_executable(test_model_registry unit/test_model_registry.cpp)
+target_link_libraries(test_model_registry PRIVATE animal_monitor_core)
+add_test(NAME test_model_registry COMMAND test_model_registry)
+
+add_executable(test_inference_scheduler unit/test_inference_scheduler.cpp)
+target_link_libraries(test_inference_scheduler PRIVATE animal_monitor_core)
+add_test(NAME test_inference_scheduler COMMAND test_inference_scheduler)
+
+add_executable(test_mlx90640_math unit/test_mlx90640_math.cpp)
+target_link_libraries(test_mlx90640_math PRIVATE animal_monitor_core)
+add_test(NAME test_mlx90640_math COMMAND test_mlx90640_math)
+
+add_executable(test_htu21d_math unit/test_htu21d_math.cpp)
+target_link_libraries(test_htu21d_math PRIVATE animal_monitor_core)
+add_test(NAME test_htu21d_math COMMAND test_htu21d_math)
+
+add_executable(test_roi_mapper unit/test_roi_mapper.cpp)
+target_link_libraries(test_roi_mapper PRIVATE animal_monitor_core)
+add_test(NAME test_roi_mapper COMMAND test_roi_mapper)
+
+add_executable(test_temperature_calibrator unit/test_temperature_calibrator.cpp)
+target_link_libraries(test_temperature_calibrator PRIVATE animal_monitor_core)
+add_test(NAME test_temperature_calibrator COMMAND test_temperature_calibrator)
+
+add_executable(test_animal_tracker unit/test_animal_tracker.cpp)
+target_link_libraries(test_animal_tracker PRIVATE animal_monitor_core)
+add_test(NAME test_animal_tracker COMMAND test_animal_tracker)
+
+add_executable(test_individual_baseline unit/test_individual_baseline.cpp)
+target_link_libraries(test_individual_baseline PRIVATE animal_monitor_core)
+add_test(NAME test_individual_baseline COMMAND test_individual_baseline)
+
+add_executable(test_anomaly_detector unit/test_anomaly_detector.cpp)
+target_link_libraries(test_anomaly_detector PRIVATE animal_monitor_core)
+add_test(NAME test_anomaly_detector COMMAND test_anomaly_detector)
+
+add_executable(test_feature_fusion unit/test_feature_fusion.cpp)
+target_link_libraries(test_feature_fusion PRIVATE animal_monitor_core)
+add_test(NAME test_feature_fusion COMMAND test_feature_fusion)
+
+add_executable(test_modbus_rtu unit/test_modbus_rtu.cpp)
+target_link_libraries(test_modbus_rtu PRIVATE animal_monitor_core)
+add_test(NAME test_modbus_rtu COMMAND test_modbus_rtu)
+
+add_executable(test_can_frame unit/test_can_frame.cpp)
+target_link_libraries(test_can_frame PRIVATE animal_monitor_core)
+add_test(NAME test_can_frame COMMAND test_can_frame)
+
+add_executable(test_peripheral_manager unit/test_peripheral_manager.cpp)
+target_link_libraries(test_peripheral_manager PRIVATE animal_monitor_core)
+add_test(NAME test_peripheral_manager COMMAND test_peripheral_manager)

@@ -32,9 +32,8 @@ class TempDir
   public:
     TempDir()
     {
-        const auto stamp =
-            std::chrono::steady_clock::now().time_since_epoch().count();
-        path_ = std::filesystem::temp_directory_path() /
+        const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+        path_            = std::filesystem::temp_directory_path() /
                 ("am_model_registry_test_" + std::to_string(stamp));
         std::filesystem::create_directories(path_);
     }
@@ -48,7 +47,7 @@ class TempDir
     std::string Write(const std::string& name, const std::string& content)
     {
         const std::filesystem::path file_path = path_ / name;
-        std::ofstream                file(file_path, std::ios::binary);
+        std::ofstream               file(file_path, std::ios::binary);
         file << content;
         return file_path.generic_string();  // 正斜杠路径：YAML 引号内反斜杠会被当转义
     }
@@ -74,7 +73,7 @@ std::string MakeManifest(const std::string& model_id, const std::string& file,
 
 AM_TEST(registry_verifies_ok_model)
 {
-    TempDir temp;
+    TempDir           temp;
     const std::string model_path = temp.Write("model_a.rknn", "hello model a");
     std::string       sha;
     AM_EXPECT(Sha256File(model_path, &sha).Ok());
@@ -113,8 +112,9 @@ AM_TEST(registry_verifies_ok_model)
 AM_TEST(registry_missing_model_not_blocking)
 {
     TempDir temp;
-    temp.Write("b.yaml", MakeManifest("det_b", temp.Dir() + "/not_exist.rknn",
-                                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    temp.Write("b.yaml",
+               MakeManifest("det_b", temp.Dir() + "/not_exist.rknn",
+                            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
     ModelRegistry registry;
     AM_EXPECT(registry.LoadFromDir(temp.Dir()).Ok());
@@ -135,7 +135,7 @@ AM_TEST(registry_missing_model_not_blocking)
 
 AM_TEST(registry_sha256_mismatch_and_placeholder)
 {
-    TempDir temp;
+    TempDir           temp;
     const std::string model_path = temp.Write("model_c.rknn", "content c");
     // 不匹配：sha256 填 64 个 '0'。
     temp.Write("c.yaml", MakeManifest("det_c", model_path, std::string(64, '0')));
@@ -189,14 +189,14 @@ AM_TEST(registry_rejects_duplicate_model_id)
 AM_TEST(verify_missing_file_message_mentions_no_ai_mode)
 {
     ModelManifest manifest;
-    manifest.model_id = "det_x";
-    manifest.file     = "definitely_missing_model_file.rknn";
-    manifest.sha256   = std::string(64, 'a');
+    manifest.model_id   = "det_x";
+    manifest.file       = "definitely_missing_model_file.rknn";
+    manifest.sha256     = std::string(64, 'a');
     const Status status = VerifyManifestFileSha256(manifest);
     AM_EXPECT_EQ(static_cast<int>(status.Code()), static_cast<int>(StatusCode::kNotFound));
     AM_EXPECT(status.Message().find("无 AI 模式") != std::string::npos);
 
-    manifest.file = "";
+    manifest.file                  = "";
     const Status empty_file_status = VerifyManifestFileSha256(manifest);
     AM_EXPECT_EQ(static_cast<int>(empty_file_status.Code()),
                  static_cast<int>(StatusCode::kNotFound));
@@ -204,7 +204,7 @@ AM_TEST(verify_missing_file_message_mentions_no_ai_mode)
 
 AM_TEST(verify_sha256_case_insensitive)
 {
-    TempDir temp;
+    TempDir           temp;
     const std::string model_path = temp.Write("model_e.rknn", "content e");
     std::string       sha;
     AM_EXPECT(Sha256File(model_path, &sha).Ok());
@@ -223,16 +223,19 @@ AM_TEST(verify_sha256_case_insensitive)
 
 AM_TEST(load_manifest_parses_template_fields)
 {
-    TempDir temp;
+    TempDir           temp;
     const std::string yaml =
         "model_id: \"grooming_v1\"\n"
         "model_kind: behavior\n"
         "task: grooming\n"
         "file: \"/srv/models/grooming.rknn\"\n"
-        "sha256: \"" + std::string(64, 'f') + "\"\n"
+        "sha256: \"" +
+        std::string(64, 'f') +
+        "\"\n"
         "rknn:\n  sdk_version: 1.6.0\n  npu_core_mask: 7\n  wants_float: false\n"
         "input:\n  - name: images\n    shape: [1, 640, 640, 3]\n    layout: NHWC\n"
-        "    data_type: uint8\n    color_format: RGB\n    letterbox: false\n    mean: []\n    std: []\n"
+        "    data_type: uint8\n    color_format: RGB\n    letterbox: false\n    mean: []\n    std: "
+        "[]\n"
         "output:\n  - name: output0\n    shape: UNKNOWN\n    data_type: int8\n"
         "    quantization_scale: UNKNOWN\n    quantization_zp: UNKNOWN\n    postprocess: yolov5\n"
         "classes: [grooming, other]\n"
@@ -274,7 +277,4 @@ AM_TEST(load_manifest_parses_template_fields)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

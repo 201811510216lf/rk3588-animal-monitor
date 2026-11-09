@@ -24,10 +24,7 @@ constexpr float kAnchorStride8[6]  = {10.0f, 13.0f, 16.0f, 30.0f, 33.0f, 23.0f};
 constexpr float kAnchorStride16[6] = {30.0f, 61.0f, 62.0f, 45.0f, 59.0f, 119.0f};
 constexpr float kAnchorStride32[6] = {116.0f, 90.0f, 156.0f, 198.0f, 373.0f, 326.0f};
 
-bool Near(float a, float b, float eps = 1e-4f)
-{
-    return std::fabs(a - b) < eps;
-}
+bool Near(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps; }
 
 // 1x1 网格：index(anchor, attr, cell=0) = anchor * (5 + num_classes) + attr。
 std::size_t CellIndex(int anchor, int attr, int num_classes)
@@ -95,8 +92,8 @@ AM_TEST(dequantize_applied_affine)
     {
         return;
     }
-    const float s5     = 1.0f / (1.0f + std::exp(-5.0f));
-    const Detection& d = detections[0];
+    const float      s5 = 1.0f / (1.0f + std::exp(-5.0f));
+    const Detection& d  = detections[0];
     AM_EXPECT(Near(d.bbox.x, -1.0f));
     AM_EXPECT(Near(d.bbox.y, -2.5f));
     AM_EXPECT(Near(d.bbox.w, 10.0f));
@@ -128,10 +125,10 @@ AM_TEST(threshold_gates_box_and_class)
 AM_TEST(class_argmax_selects_max_channel)
 {
     std::vector<std::int8_t> data(3 * (5 + 3), 0);
-    data[CellIndex(0, 4, 3)] = 100;   // box_conf
-    data[CellIndex(0, 5, 3)] = -10;   // class 0
-    data[CellIndex(0, 6, 3)] = 50;    // class 1 ← argmax
-    data[CellIndex(0, 7, 3)] = -5;    // class 2
+    data[CellIndex(0, 4, 3)] = 100;  // box_conf
+    data[CellIndex(0, 5, 3)] = -10;  // class 0
+    data[CellIndex(0, 6, 3)] = 50;   // class 1 ← argmax
+    data[CellIndex(0, 7, 3)] = -5;   // class 2
     data[CellIndex(1, 4, 3)] = -100;
     data[CellIndex(2, 4, 3)] = -100;
 
@@ -148,9 +145,9 @@ AM_TEST(class_argmax_selects_max_channel)
 AM_TEST(nms_same_class_suppresses_overlap)
 {
     std::vector<Detection> detections;
-    Detection             a;
-    a.class_id = 0;
-    a.bbox     = Detection::Bbox{0.0f, 0.0f, 10.0f, 10.0f};
+    Detection              a;
+    a.class_id   = 0;
+    a.bbox       = Detection::Bbox{0.0f, 0.0f, 10.0f, 10.0f};
     a.confidence = 0.9f;
     Detection b;
     b.class_id   = 0;
@@ -171,7 +168,7 @@ AM_TEST(nms_different_class_keeps_both)
 {
     // 修复跨类抑制 bug：同类 IoU=1 但类别不同 → 必须都保留。
     std::vector<Detection> detections;
-    Detection             a;
+    Detection              a;
     a.class_id   = 0;
     a.bbox       = Detection::Bbox{0.0f, 0.0f, 10.0f, 10.0f};
     a.confidence = 0.9f;
@@ -208,15 +205,15 @@ AM_TEST(postprocess_three_heads_keeps_per_class)
     const std::vector<std::int8_t> d1 = make_head_data(1);
     const std::vector<std::int8_t> d2 = make_head_data(2);
 
-    const std::int8_t* data[3] = {d0.data(), d1.data(), d2.data()};
-    const std::size_t  lens[3] = {d0.size(), d1.size(), d2.size()};
+    const std::int8_t* data[3]  = {d0.data(), d1.data(), d2.data()};
+    const std::size_t  lens[3]  = {d0.size(), d1.size(), d2.size()};
     Yolov5HeadSpec     specs[3] = {MakeSpec(8, kAnchorStride8, 1.0f, 0),
                                    MakeSpec(16, kAnchorStride16, 1.0f, 0),
                                    MakeSpec(32, kAnchorStride32, 1.0f, 0)};
 
     std::vector<Detection> detections;
-    const int count = PostprocessYolov5Quantized(data, lens, specs, num_classes, 0.45f,
-                                                 &detections);
+    const int              count =
+        PostprocessYolov5Quantized(data, lens, specs, num_classes, 0.45f, &detections);
     AM_EXPECT_EQ(count, 3);
     AM_EXPECT_EQ(detections.size(), 3u);
 }
@@ -224,8 +221,8 @@ AM_TEST(postprocess_three_heads_keeps_per_class)
 AM_TEST(postprocess_suppresses_duplicate_head)
 {
     // head0 与 head1 同 stride/锚点/类别（完全重合）→ NMS 保留 1；head2 类不同保留。
-    const int num_classes = 3;
-    auto make_head_data = [num_classes](int selected_class)
+    const int num_classes    = 3;
+    auto      make_head_data = [num_classes](int selected_class)
     {
         std::vector<std::int8_t> data(3 * (5 + num_classes), 0);
         data[CellIndex(0, 4, num_classes)] = 100;
@@ -243,15 +240,15 @@ AM_TEST(postprocess_suppresses_duplicate_head)
     const std::vector<std::int8_t> d1 = make_head_data(0);
     const std::vector<std::int8_t> d2 = make_head_data(2);
 
-    const std::int8_t* data[3] = {d0.data(), d1.data(), d2.data()};
-    const std::size_t  lens[3] = {d0.size(), d1.size(), d2.size()};
+    const std::int8_t* data[3]  = {d0.data(), d1.data(), d2.data()};
+    const std::size_t  lens[3]  = {d0.size(), d1.size(), d2.size()};
     Yolov5HeadSpec     specs[3] = {MakeSpec(8, kAnchorStride8, 1.0f, 0),
                                    MakeSpec(8, kAnchorStride8, 1.0f, 0),
                                    MakeSpec(32, kAnchorStride32, 1.0f, 0)};
 
     std::vector<Detection> detections;
-    const int count = PostprocessYolov5Quantized(data, lens, specs, num_classes, 0.45f,
-                                                 &detections);
+    const int              count =
+        PostprocessYolov5Quantized(data, lens, specs, num_classes, 0.45f, &detections);
     AM_EXPECT_EQ(count, 2);
     AM_EXPECT_EQ(detections.size(), 2u);
 }
@@ -259,11 +256,10 @@ AM_TEST(postprocess_suppresses_duplicate_head)
 AM_TEST(postprocess_rejects_invalid_arguments)
 {
     std::vector<Detection> detections;
-    AM_EXPECT_EQ(PostprocessYolov5Quantized(nullptr, nullptr, nullptr, 1, 0.45f, &detections),
-                 -1);
+    AM_EXPECT_EQ(PostprocessYolov5Quantized(nullptr, nullptr, nullptr, 1, 0.45f, &detections), -1);
 
-    const std::int8_t* data[3] = {nullptr, nullptr, nullptr};
-    std::size_t        lens[3] = {0, 0, 0};
+    const std::int8_t* data[3]  = {nullptr, nullptr, nullptr};
+    std::size_t        lens[3]  = {0, 0, 0};
     Yolov5HeadSpec     specs[3] = {MakeSpec(8, kAnchorStride8, 1.0f, 0),
                                    MakeSpec(16, kAnchorStride16, 1.0f, 0),
                                    MakeSpec(32, kAnchorStride32, 1.0f, 0)};
@@ -282,7 +278,4 @@ AM_TEST(postprocess_rejects_invalid_arguments)
 
 }  // namespace
 
-int main()
-{
-    return am_test::RunAll();
-}
+int main() { return am_test::RunAll(); }

@@ -2,14 +2,14 @@
 
 namespace animal_monitor::inference {
 
-InferenceScheduler::InferenceScheduler(ScheduleStrategy strategy,
+InferenceScheduler::InferenceScheduler(ScheduleStrategy              strategy,
                                        std::vector<IInferenceModel*> models, Options options)
     : strategy_(strategy),
       models_(std::move(models)),
       options_(options),
-      results_(options_.result_queue_capacity, BoundedQueue<InferenceResult>::PushPolicy::kDropOldest)
-{
-}
+      results_(options_.result_queue_capacity,
+               BoundedQueue<InferenceResult>::PushPolicy::kDropOldest)
+{}
 
 Status InferenceScheduler::Submit(const VideoFrame& frame, std::uint32_t camera_id)
 {
@@ -29,18 +29,17 @@ Status InferenceScheduler::Submit(const VideoFrame& frame, std::uint32_t camera_
 
         // 同一帧不得重复推理：按 frame_id 去重，每路仅保留最近一次提交。
         const auto it = last_frame_by_camera_.find(frame.meta.id.camera_id);
-        if (it != last_frame_by_camera_.end() &&
-            it->second.sequence == frame.meta.id.sequence)
+        if (it != last_frame_by_camera_.end() && it->second.sequence == frame.meta.id.sequence)
         {
             ++metrics_.dedup_skipped;
             return Status(StatusCode::kAlreadyExists, "帧已提交过（frame_id 去重），跳过重复推理");
         }
         last_frame_by_camera_[frame.meta.id.camera_id] = frame.meta.id;
-        model_index = RouteLocked(camera_id);
+        model_index                                    = RouteLocked(camera_id);
     }
 
     // Phase 3：同步直调。并发策略待目标板实测后替换为线程池 + 异步提交队列。
-    IInferenceModel* model  = models_[model_index];
+    IInferenceModel* model = models_[model_index];
     InferenceResult  result;
     Status           status = model->Infer(frame, &result);
 
@@ -51,7 +50,7 @@ Status InferenceScheduler::Submit(const VideoFrame& frame, std::uint32_t camera_
 
     {
         std::lock_guard<std::mutex> lock(state_mutex_);
-        ModelMetrics& metrics = metrics_.per_model[model->Name()];
+        ModelMetrics&               metrics = metrics_.per_model[model->Name()];
         ++metrics.executed;
         if (!status)
         {
@@ -63,7 +62,7 @@ Status InferenceScheduler::Submit(const VideoFrame& frame, std::uint32_t camera_
     {
         // kDropOldest 策略下仅关闭时失败。
         std::lock_guard<std::mutex> lock(state_mutex_);
-        ModelMetrics& metrics = metrics_.per_model[model->Name()];
+        ModelMetrics&               metrics = metrics_.per_model[model->Name()];
         ++metrics.failed;
         return Status(StatusCode::kUnavailable, "结果队列已关闭");
     }
@@ -107,8 +106,8 @@ void InferenceScheduler::Close()
 InferenceScheduler::Metrics InferenceScheduler::GetMetrics() const
 {
     std::lock_guard<std::mutex> lock(state_mutex_);
-    Metrics                       metrics = metrics_;
-    metrics.dropped = results_.GetMetrics().drops;
+    Metrics                     metrics = metrics_;
+    metrics.dropped                     = results_.GetMetrics().drops;
     return metrics;
 }
 

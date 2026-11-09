@@ -17,9 +17,7 @@ class MockInferenceModel : public IInferenceModel
 {
   public:
     MockInferenceModel() = default;
-    explicit MockInferenceModel(std::string model_id) : name_(std::move(model_id))
-    {
-    }
+    explicit MockInferenceModel(std::string model_id) : name_(std::move(model_id)) {}
 
     // 构造后稳定；Load 不改变 Name（避免调度指标键漂移）。
     const char* Name() const override { return name_.c_str(); }

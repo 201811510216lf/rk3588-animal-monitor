@@ -22,8 +22,7 @@ constexpr std::array<std::uint32_t, 64> kSha256RoundConstants = {
 };
 
 constexpr std::array<std::uint32_t, 8> kSha256InitialState = {
-    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 };
 
 constexpr std::uint32_t RotateRight(std::uint32_t value, unsigned int bits)
@@ -96,8 +95,10 @@ class Sha256Context
         }
         for (std::size_t i = 16; i < w.size(); ++i)
         {
-            const std::uint32_t s0 = RotateRight(w[i - 15], 7) ^ RotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3);
-            const std::uint32_t s1 = RotateRight(w[i - 2], 17) ^ RotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10);
+            const std::uint32_t s0 =
+                RotateRight(w[i - 15], 7) ^ RotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3);
+            const std::uint32_t s1 =
+                RotateRight(w[i - 2], 17) ^ RotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10);
             w[i] = w[i - 16] + s0 + w[i - 7] + s1;
         }
 
@@ -112,20 +113,22 @@ class Sha256Context
 
         for (std::size_t i = 0; i < w.size(); ++i)
         {
-            const std::uint32_t big_sigma1 = RotateRight(e, 6) ^ RotateRight(e, 11) ^ RotateRight(e, 25);
-            const std::uint32_t choose     = (e & f) ^ ((~e) & g);
-            const std::uint32_t temp1      = h + big_sigma1 + choose + kSha256RoundConstants[i] + w[i];
-            const std::uint32_t big_sigma0 = RotateRight(a, 2) ^ RotateRight(a, 13) ^ RotateRight(a, 22);
-            const std::uint32_t majority   = (a & b) ^ (a & c) ^ (b & c);
-            const std::uint32_t temp2      = big_sigma0 + majority;
-            h = g;
-            g = f;
-            f = e;
-            e = d + temp1;
-            d = c;
-            c = b;
-            b = a;
-            a = temp1 + temp2;
+            const std::uint32_t big_sigma1 =
+                RotateRight(e, 6) ^ RotateRight(e, 11) ^ RotateRight(e, 25);
+            const std::uint32_t choose = (e & f) ^ ((~e) & g);
+            const std::uint32_t temp1  = h + big_sigma1 + choose + kSha256RoundConstants[i] + w[i];
+            const std::uint32_t big_sigma0 =
+                RotateRight(a, 2) ^ RotateRight(a, 13) ^ RotateRight(a, 22);
+            const std::uint32_t majority = (a & b) ^ (a & c) ^ (b & c);
+            const std::uint32_t temp2    = big_sigma0 + majority;
+            h                            = g;
+            g                            = f;
+            f                            = e;
+            e                            = d + temp1;
+            d                            = c;
+            c                            = b;
+            b                            = a;
+            a                            = temp1 + temp2;
         }
 
         state_[0] += a;
@@ -138,16 +141,16 @@ class Sha256Context
         state_[7] += h;
     }
 
-    std::array<std::uint32_t, 8> state_ = kSha256InitialState;
-    std::uint64_t                 total_bytes_ = 0;
-    std::array<std::uint8_t, 64>  buffer_{};
-    std::size_t                   buffer_used_ = 0;
+    std::array<std::uint32_t, 8> state_       = kSha256InitialState;
+    std::uint64_t                total_bytes_ = 0;
+    std::array<std::uint8_t, 64> buffer_{};
+    std::size_t                  buffer_used_ = 0;
 };
 
 std::string ToHexLower(const std::array<std::uint8_t, 32>& digest)
 {
     static constexpr char kHexDigits[] = "0123456789abcdef";
-    std::string            out;
+    std::string           out;
     out.reserve(64);
     for (const std::uint8_t byte : digest)
     {
@@ -182,12 +185,13 @@ Status Sha256File(const std::string& path, std::string* hex)
         return Status(StatusCode::kNotFound, "cannot open file: " + path);
     }
 
-    constexpr std::size_t            kChunkSize = 64 * 1024;
+    constexpr std::size_t                kChunkSize = 64 * 1024;
     std::array<std::uint8_t, kChunkSize> chunk{};
-    Sha256Context                    context;
+    Sha256Context                        context;
     while (file)
     {
-        file.read(reinterpret_cast<char*>(chunk.data()), static_cast<std::streamsize>(chunk.size()));
+        file.read(reinterpret_cast<char*>(chunk.data()),
+                  static_cast<std::streamsize>(chunk.size()));
         const std::streamsize got = file.gcount();
         if (got > 0)
         {

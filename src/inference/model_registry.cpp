@@ -57,12 +57,11 @@ Status ModelRegistry::LoadFromDir(const std::string& manifests_dir)
     std::error_code error;
     if (!std::filesystem::is_directory(manifests_dir, error))
     {
-        return Status(StatusCode::kNotFound,
-                      "manifests 目录不存在或不可访问: " + manifests_dir);
+        return Status(StatusCode::kNotFound, "manifests 目录不存在或不可访问: " + manifests_dir);
     }
 
-    std::vector<std::string> files;
-    std::filesystem::directory_iterator it(manifests_dir, error);
+    std::vector<std::string>                  files;
+    std::filesystem::directory_iterator       it(manifests_dir, error);
     const std::filesystem::directory_iterator end;
     for (; !error && it != end; it.increment(error))
     {
@@ -88,7 +87,7 @@ Status ModelRegistry::LoadFromDir(const std::string& manifests_dir)
         }
 
         ModelManifest manifest;
-        Status       status = LoadManifestFile(file, &manifest);
+        Status        status = LoadManifestFile(file, &manifest);
         if (!status)
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -107,20 +106,21 @@ Status ModelRegistry::LoadFromDir(const std::string& manifests_dir)
         }
 
         // 逐模型校验：模型文件存在时才校验 sha256（缺失不阻断注册）。
-        std::string record_status;
-        std::string record_message;
+        std::string     record_status;
+        std::string     record_message;
         std::error_code exists_error;
         if (manifest.file.empty() || !std::filesystem::exists(manifest.file, exists_error))
         {
-            record_status  = kStatusModelMissing;
-            record_message = kModelMissingMessage + std::string(": ") +
-                             (manifest.file.empty() ? std::string("(manifest 未指定 file)") : manifest.file);
+            record_status = kStatusModelMissing;
+            record_message =
+                kModelMissingMessage + std::string(": ") +
+                (manifest.file.empty() ? std::string("(manifest 未指定 file)") : manifest.file);
         }
         else if (manifest.sha256.empty() || manifest.sha256 == kManifestSha256Placeholder)
         {
             record_status  = kStatusSha256Unknown;
-            record_message = "未填写真实 sha256（空或 " +
-                             std::string(kManifestSha256Placeholder) + "），跳过完整性校验";
+            record_message = "未填写真实 sha256（空或 " + std::string(kManifestSha256Placeholder) +
+                             "），跳过完整性校验";
         }
         else
         {

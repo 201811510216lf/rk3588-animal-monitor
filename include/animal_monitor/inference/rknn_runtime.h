@@ -12,6 +12,7 @@
 #error "rknn_runtime.h 仅限目标构建（需定义 ANIMAL_MONITOR_ENABLE_TARGET_DEPS）"
 #endif
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -48,7 +49,7 @@ class RknnOutputs
     }
 
   private:
-    rknn_context           context_ = nullptr;
+    rknn_context             context_ = nullptr;
     std::vector<rknn_output> outputs_;
 };
 
@@ -96,8 +97,8 @@ class RknnYolov5Model : public IInferenceModel
     // 构造后稳定；Load 成功后为 manifest.model_id（空则保持默认）。
     const char* Name() const override { return name_.c_str(); }
 
-    Status Load(const ModelManifest& manifest) override;
-    Status Infer(const VideoFrame& frame, InferenceResult* result) override;
+    Status        Load(const ModelManifest& manifest) override;
+    Status        Infer(const VideoFrame& frame, InferenceResult* result) override;
     ModelManifest Manifest() const override;
 
   private:
@@ -114,9 +115,9 @@ class RknnYolov5Model : public IInferenceModel
     ModelManifest         manifest_;
     RknnRuntime           runtime_;
     std::vector<HeadInfo> heads_;
-    int                   num_classes_   = 0;
-    std::size_t           input_height_  = 0;
-    std::size_t           input_width_   = 0;
+    int                   num_classes_    = 0;
+    std::size_t           input_height_   = 0;
+    std::size_t           input_width_    = 0;
     std::size_t           input_channels_ = 3;
 };
 

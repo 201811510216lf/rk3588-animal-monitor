@@ -4,10 +4,7 @@
 // 依据：include/animal_monitor/environment/htu21d_math.h；HTU21D 数据手册公开公式
 // 测试锚点说明：
 //   - (0x00,0x00) → 0x00：任务书指定锚点（初值 0、异或 0、无置位位）。
-//   - (0x68,0x3A) → 0x4B：按算法定义手工逐位推导的锚点（非手册值，推导过程见下）：
-//     crc=0x68 → [0xD0,0xB1,0x53,0xA6,0x7D,0xFA,0xC5,0xBB]（8 次移位后 0xBB）；
-//     crc=0xBB^0x3A=0x81 → [0x33,0x66,0xCC,0xA9,0x63,0xC6,0xBD,0x4B] → 0x4B。
-//     （MSB 先行：MSB=1 时 crc=(crc<<1)^0x31，否则 crc<<1，取低 8 位。）
+//   - (0x68,0x3A) → 0x7C 与 (0x4E,0x85) → 0x6B：Sensirion 数据手册 CRC 典型示例值。
 //   - 端点换算：srh=0 → -6%；srh=0xFFFF → 125×65535/65536-6 ≈ 118.9981%；
 //     st=0 → -46.85°C；st=0xFFFF → 175.72×65535/65536-46.85 ≈ 128.8673°C。
 // ============================================================================
@@ -37,10 +34,11 @@ AM_TEST(crc8_zero_vector)
     AM_EXPECT_EQ(Htu21dCrc8(0x00, 0x00), 0x00);
 }
 
-AM_TEST(crc8_hand_derived_vector)
+AM_TEST(crc8_datasheet_example_vectors)
 {
-    // 手工逐位推导锚点（推导过程见文件头注释）。
-    AM_EXPECT_EQ(Htu21dCrc8(0x68, 0x3A), 0x4B);
+    // Sensirion 数据手册 CRC 典型示例值（与 (0,0)→0 锚点共同自证实现正确）。
+    AM_EXPECT_EQ(Htu21dCrc8(0x68, 0x3A), 0x7C);
+    AM_EXPECT_EQ(Htu21dCrc8(0x4E, 0x85), 0x6B);
 }
 
 AM_TEST(crc8_round_trip_for_typical_values)
@@ -56,7 +54,7 @@ AM_TEST(crc8_round_trip_for_typical_values)
 
 AM_TEST(crc8_rejects_corrupted_byte)
 {
-    AM_EXPECT(!Htu21dCrcOk(0x683A, static_cast<std::uint8_t>(0x4B ^ 0x01)));
+    AM_EXPECT(!Htu21dCrcOk(0x683A, static_cast<std::uint8_t>(0x7C ^ 0x01)));
     AM_EXPECT(!Htu21dCrcOk(0x683A, 0x00));
     AM_EXPECT(!Htu21dCrcOk(0x0001, 0x00));
 }

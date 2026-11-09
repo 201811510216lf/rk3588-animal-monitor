@@ -80,9 +80,9 @@ int NibbleSigned(std::uint16_t word, int shift)
 
 void ExtractVddParameters(const std::uint16_t* words, Mlx90640EepromData* d)
 {
-    // word 51（0x2466）：kVdd 高 8 位（int8 × 32）、vdd25 低 8 位。
+    // word 51（0x2466）：kVdd 高 8 位（int8 × 32）、vdd25 低 8 位（无符号 0..255，官方库语义）。
     d->vdd_pixel = static_cast<float>(SignExtend(words[51] >> 8, 8) * 32);
-    const int vdd25_byte = SignExtend(words[51] & 0xFF, 8);
+    const int vdd25_byte = static_cast<int>(words[51] & 0xFF);
     d->vdd25 = static_cast<float>(((vdd25_byte - 256) << 5) - 8192);
 }
 
@@ -294,7 +294,7 @@ bool ExtractKtaPixelParameters(const std::uint16_t* words, Mlx90640EepromData* d
     {
         const int row   = p / kMlx90640Width;
         const int col   = p % kMlx90640Width;
-        const int split = 2 * (row / 2) + col % 2;  // 2*(row - (row/2)*2) + p%2
+        const int split = 2 * (row % 2) + col % 2;  // 官方库 2*(p/32 - (p/64)*2) + p%2
         float     v     = static_cast<float>(SignExtend((words[64 + p] & 0x000E) >> 1, 3));
         v = v * kta_scale2 + static_cast<float>(kta_rc[split]);
         kta_temp[p] = v / kta_scale1;
@@ -343,7 +343,7 @@ bool ExtractKvPixelParameters(const std::uint16_t* words, Mlx90640EepromData* d)
     {
         const int row   = p / kMlx90640Width;
         const int col   = p % kMlx90640Width;
-        const int split = 2 * (row / 2) + col % 2;
+        const int split = 2 * (row % 2) + col % 2;  // 官方库 2*(p/32 - (p/64)*2) + p%2
         kv_temp[p]      = static_cast<float>(kv_t[split]) / kv_scale_ee;
     }
 
@@ -648,10 +648,9 @@ float CalcTo(const Mlx90640EepromData& eeprom, std::uint32_t pixel, float v_ir_c
     // 一次解算 + 分段校正（官方库 CalculateTo）。
     float sx = alpha_comp * alpha_comp * alpha_comp * (ir_data + alpha_comp * ta_tr);
     sx       = std::sqrt(std::sqrt(sx)) * eeprom.ks_to[1];
-    float to = std::sqrt(std::sqrt(ir_data / (alpha_comp * (1.0f - eeprom.ks_to[1] * kCelsiusToKelvin) +
-                                             sx) +
-                                    ta_tr)) -
-               kCelsiusToKelvin;
+    const float first_denom =
+        alpha_comp * (1.0f - eeprom.ks_to[1] * kCelsiusToKelvin) + sx;
+    float to = std::sqrt(std::sqrt(ir_data / first_denom + ta_tr)) - kCelsiusToKelvin;
 
     int range = 3;
     if (to < eeprom.ct[1])

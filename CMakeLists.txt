@@ -61,6 +61,27 @@ add_library(animal_monitor_core STATIC
     src/media/mock_video_source.cpp
     src/media/mock_video_encoder.cpp
     src/media/null_video_publisher.cpp
+    # Phase 3 推理链可移植部分（host 可编译）
+    src/common/sha256.cpp
+    src/inference/model_manifest.cpp
+    src/inference/yolov5_postprocess.cpp
+    src/inference/model_registry.cpp
+    src/inference/inference_scheduler.cpp
+    src/inference/mock_inference_model.cpp
+    # Phase 4 传感器纯数学（host 可编译）
+    src/thermal/thermal_frame.cpp
+    src/thermal/mlx90640_math.cpp
+    src/environment/htu21d_math.cpp
+    # Phase 5 标定与融合（host 可编译）
+    src/calibration/roi_mapper.cpp
+    src/calibration/temperature_calibrator.cpp
+    src/fusion/animal_tracker.cpp
+    src/fusion/individual_baseline.cpp
+    src/fusion/anomaly_detector.cpp
+    src/fusion/feature_fusion.cpp
+    # Phase 6 外设可移植部分（host 可编译）
+    src/communication/modbus_rtu.cpp
+    src/device/peripheral_manager.cpp
 )
 
 target_include_directories(animal_monitor_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -104,6 +125,17 @@ if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
     target_sources(animal_monitor_core PRIVATE
         src/thermal/mlx90640_client.cpp
         src/environment/htu21d_client.cpp
+    )
+    # Phase 6 外设客户端（目标板；优先复用内核驱动，UNVERIFIED）
+    target_sources(animal_monitor_core PRIVATE
+        src/communication/can_client.cpp
+        src/communication/rs485_modbus_client.cpp
+        src/device/gpio_client.cpp
+        src/device/pwm_client.cpp
+        src/device/adc_client.cpp
+        src/device/rtc_client.cpp
+        src/device/eeprom_client.cpp
+        src/device/watchdog_client.cpp
     )
     # 目标板流水线工厂（真实 V4L2/MPP/ZLM 实现）
     target_sources(animal_monitor_app PRIVATE src/app/pipeline_factory_target.cpp)

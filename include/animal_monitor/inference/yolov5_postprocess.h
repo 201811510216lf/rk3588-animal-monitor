@@ -24,7 +24,7 @@ namespace animal_monitor::inference {
 // 单输出头解码参数。anchors 指向 3 组宽高共 6 个 float（生命周期覆盖调用）。
 struct Yolov5HeadSpec
 {
-    int          stride         = 0;      // 8 / 16 / 32
+    int          stride         = 0;        // 8 / 16 / 32
     const float* anchors        = nullptr;  // 3 组 (w, h)，共 6 值
     int          grid_h         = 0;
     int          grid_w         = 0;
@@ -36,9 +36,8 @@ struct Yolov5HeadSpec
 // 解码单个量化输出头。数据布局与 A/B 实测索引一致（每通道平面 grid_len 连续，
 // 扁平 NCHW）：index(c, cell) = c * grid_len + cell，c = anchor * (5 + num_classes) + attr。
 // 反量化：deqnt = (int8 - zp) * scale。data_len 不足或参数非法时静默返回（不追加输出）。
-void DecodeQuantizedHead(const std::int8_t* data, std::size_t data_len,
-                         const Yolov5HeadSpec& spec, int num_classes,
-                         std::vector<Detection>* out);
+void DecodeQuantizedHead(const std::int8_t* data, std::size_t data_len, const Yolov5HeadSpec& spec,
+                         int num_classes, std::vector<Detection>* out);
 
 // 按类别分组做 NMS：组内按 confidence 降序贪心抑制（IoU > threshold 抑制），
 // 不同类别互不抑制（修复 A/B 跨类抑制 bug）。
@@ -47,7 +46,7 @@ void NmsPerClass(std::vector<Detection>* detections, float iou_threshold);
 // 三头 yolov5 量化后处理：解码 → 拼接 → 按类 NMS。
 // 返回最终检测数量；参数非法（空指针 / num_classes<=0 / 任一数据长度不足等）返回 -1。
 int PostprocessYolov5Quantized(const std::int8_t** head_data, const std::size_t* head_lens,
-                               const Yolov5HeadSpec* heads, int num_classes,
-                               float nms_threshold, std::vector<Detection>* out);
+                               const Yolov5HeadSpec* heads, int num_classes, float nms_threshold,
+                               std::vector<Detection>* out);
 
 }  // namespace animal_monitor::inference

@@ -25,8 +25,8 @@ class ModelRegistry
     // 模型状态记录（供应用打印/监控）。
     struct StatusRecord
     {
-        std::string status;   // ok / model_missing / sha256_mismatch / sha256_unknown /
-                              // manifest_invalid / duplicate_model_id / skipped_non_yaml
+        std::string status;  // ok / model_missing / sha256_mismatch / sha256_unknown /
+                             // manifest_invalid / duplicate_model_id / skipped_non_yaml
         std::string message;
     };
 
@@ -58,9 +58,9 @@ class ModelRegistry
     void RecordStatusLocked(const std::string& key, const std::string& status,
                             const std::string& message);
 
-    mutable std::mutex                     mutex_;
-    std::map<std::string, ModelManifest>   manifests_;
-    std::map<std::string, StatusRecord>    statuses_;
+    mutable std::mutex                   mutex_;
+    std::map<std::string, ModelManifest> manifests_;
+    std::map<std::string, StatusRecord>  statuses_;
 };
 
 }  // namespace animal_monitor::inference

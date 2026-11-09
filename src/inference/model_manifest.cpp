@@ -78,7 +78,7 @@ bool ParseIntList(const std::string& text, std::vector<std::int64_t>* out)
         body = body.substr(1, body.size() - 2);
     }
     out->clear();
-    std::string item;
+    std::string        item;
     std::istringstream stream(body);
     while (std::getline(stream, item, ','))
     {
@@ -91,8 +91,7 @@ bool ParseIntList(const std::string& text, std::vector<std::int64_t>* out)
                 ++begin;
             }
             std::size_t end = item.size();
-            while (end > begin &&
-                   std::isspace(static_cast<unsigned char>(item[end - 1])) != 0)
+            while (end > begin && std::isspace(static_cast<unsigned char>(item[end - 1])) != 0)
             {
                 --end;
             }
@@ -106,8 +105,8 @@ bool ParseIntList(const std::string& text, std::vector<std::int64_t>* out)
         {
             return false;
         }
-        char* end_ptr = nullptr;
-        const long long value = std::strtoll(trimmed.c_str(), &end_ptr, 10);
+        char*           end_ptr = nullptr;
+        const long long value   = std::strtoll(trimmed.c_str(), &end_ptr, 10);
         if (end_ptr == trimmed.c_str() || *end_ptr != '\0')
         {
             return false;
@@ -130,12 +129,12 @@ Status ParseDoubleList(const std::string& text, std::vector<double>* out)
     {
         return Status::MakeOk();
     }
-    std::string item;
+    std::string        item;
     std::istringstream stream(body);
     while (std::getline(stream, item, ','))
     {
-        char* end_ptr = nullptr;
-        const double value = std::strtod(item.c_str(), &end_ptr);
+        char*        end_ptr = nullptr;
+        const double value   = std::strtod(item.c_str(), &end_ptr);
         if (end_ptr == item.c_str() || *end_ptr != '\0')
         {
             return Status(StatusCode::kConfigurationError, "无法解析浮点列表元素: " + item);
@@ -172,7 +171,7 @@ Status ParseStringList(const ConfigValue& entry, std::vector<std::string>* out)
         {
             body = body.substr(1, body.size() - 2);
         }
-        std::string item;
+        std::string        item;
         std::istringstream stream(body);
         while (std::getline(stream, item, ','))
         {
@@ -184,8 +183,7 @@ Status ParseStringList(const ConfigValue& entry, std::vector<std::string>* out)
                 ++begin;
             }
             std::size_t end = item.size();
-            while (end > begin &&
-                   std::isspace(static_cast<unsigned char>(item[end - 1])) != 0)
+            while (end > begin && std::isspace(static_cast<unsigned char>(item[end - 1])) != 0)
             {
                 --end;
             }
@@ -299,7 +297,7 @@ Status ParseRknn(const ConfigValue& root, ModelRknnConfig* out)
         return st;
     }
     std::int64_t core_mask = out->npu_core_mask;
-    st = GetOptionalInt(*rknn, "npu_core_mask", &core_mask);
+    st                     = GetOptionalInt(*rknn, "npu_core_mask", &core_mask);
     if (!st)
     {
         return st;
@@ -327,7 +325,7 @@ Status ParseInputs(const ConfigValue& root, std::vector<ModelInputSpec>* out)
             return Status(StatusCode::kConfigurationError, "input 序列元素必须是映射");
         }
         ModelInputSpec spec;
-        Status st = GetOptionalScalar(item, "name", &spec.name);
+        Status         st = GetOptionalScalar(item, "name", &spec.name);
         if (!st)
         {
             return st;
@@ -407,7 +405,7 @@ Status ParseOutputs(const ConfigValue& root, std::vector<ModelOutputSpec>* out)
             return Status(StatusCode::kConfigurationError, "output 序列元素必须是映射");
         }
         ModelOutputSpec spec;
-        Status st = GetOptionalScalar(item, "name", &spec.name);
+        Status          st = GetOptionalScalar(item, "name", &spec.name);
         if (!st)
         {
             return st;
@@ -443,7 +441,7 @@ Status ParseOutputs(const ConfigValue& root, std::vector<ModelOutputSpec>* out)
             return st;
         }
         spec.quantization_zp = static_cast<std::int32_t>(zp_value);
-        st = GetOptionalScalar(item, "postprocess", &spec.postprocess);
+        st                   = GetOptionalScalar(item, "postprocess", &spec.postprocess);
         if (!st)
         {
             return st;
@@ -465,14 +463,14 @@ Status ParseThresholds(const ConfigValue& root, ModelManifest* manifest)
         return Status(StatusCode::kConfigurationError, "manifest 键 'thresholds' 必须是映射");
     }
     double value = manifest->confidence_threshold;
-    Status st = GetOptionalDouble(*thresholds, "confidence", &value);
+    Status st    = GetOptionalDouble(*thresholds, "confidence", &value);
     if (!st)
     {
         return st;
     }
     manifest->confidence_threshold = value;
-    value = manifest->nms_threshold;
-    st = GetOptionalDouble(*thresholds, "nms", &value);
+    value                          = manifest->nms_threshold;
+    st                             = GetOptionalDouble(*thresholds, "nms", &value);
     if (!st)
     {
         return st;
@@ -490,7 +488,7 @@ Status LoadManifestFile(const std::string& path, ModelManifest* out)
         return Status(StatusCode::kInvalidArgument, "LoadManifestFile: out 输出参数为空");
     }
     ConfigValue root;
-    Status st = config::ConfigLoader::LoadFromFile(path, &root);
+    Status      st = config::ConfigLoader::LoadFromFile(path, &root);
     if (!st)
     {
         return Status(st.Code(), "解析 manifest 失败（" + path + "）: " + st.Message());
@@ -585,12 +583,12 @@ Status VerifyManifestFileSha256(const ModelManifest& manifest)
     }
     if (manifest.sha256.empty() || manifest.sha256 == kManifestSha256Placeholder)
     {
-        return Status(StatusCode::kConfigurationError,
-                      "manifest.sha256 未填写真实值（空或 " +
-                          std::string(kManifestSha256Placeholder) + "），无法校验完整性");
+        return Status(StatusCode::kConfigurationError, "manifest.sha256 未填写真实值（空或 " +
+                                                           std::string(kManifestSha256Placeholder) +
+                                                           "），无法校验完整性");
     }
     std::string actual;
-    Status st = Sha256File(manifest.file, &actual);
+    Status      st = Sha256File(manifest.file, &actual);
     if (!st)
     {
         if (st.Code() == StatusCode::kNotFound)

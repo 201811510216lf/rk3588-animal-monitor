@@ -25,9 +25,9 @@ struct Detection
         float h = 0.0f;
     };
 
-    std::int32_t class_id   = 0;      // 类别索引（对应 manifest.classes；未映射时为原始 argmax 索引）
+    std::int32_t class_id = 0;  // 类别索引（对应 manifest.classes；未映射时为原始 argmax 索引）
     Bbox         bbox;
-    float        confidence = 0.0f;   // box_conf * class_conf（必须赋值，见审计 B 缺陷 #2）
+    float        confidence = 0.0f;  // box_conf * class_conf（必须赋值，见审计 B 缺陷 #2）
 };
 
 // 一次推理的输出。valid=true 表示推理执行成功（即使 detections 为空）。
@@ -35,7 +35,7 @@ struct Detection
 // camera_id / monotonic_ns 字段由 InferenceScheduler 统一覆写，保证与提交帧一致。
 struct InferenceResult
 {
-    bool                   valid        = false;
+    bool                   valid = false;
     FrameId                frame_id;
     std::uint32_t          camera_id    = 0;
     std::int64_t           monotonic_ns = 0;
