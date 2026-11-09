@@ -1,0 +1,14 @@
+[Unit]
+Description=RK3588 Animal Behavior & Thermal Monitoring Platform
+After=network.target
+
+[Service]
+Type=simple
+# 以实际安装路径与用户为准（模板，UNVERIFIED）
+ExecStart=/usr/local/bin/animal_monitor_app --config /etc/animal_monitor/default.yaml
+Restart=on-failure
+RestartSec=5
+# 看门狗集成（Phase 6）: WatchdogSec=15
+
+[Install]
+WantedBy=multi-user.target

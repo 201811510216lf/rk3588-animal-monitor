@@ -1,0 +1,8 @@
+# udev 规则模板（UNVERIFIED）
+
+# 板卡确定后按实际设备与权限需求填写；禁止臆造设备路径。
+# 视频设备（示例，按 BSP 调整）
+# SUBSYSTEM=="video4linux", KERNEL=="video*", MODE="0660", GROUP="video"
+
+# Watchdog（示例）
+# KERNEL=="watchdog*", MODE="0660"

@@ -1,0 +1,187 @@
+# animal_monitor 默认配置
+# 注意：所有设备路径、板卡、Sensor、GPIO、DTS、模型信息均未验证（UNVERIFIED）。
+# 凭据/密钥一律不得写入本文件，运行时从受保护环境注入。
+
+board_profile: generic-rk3588   # 见 configs/boards/
+
+# ---------------------------------------------------------------
+# 双路相机（Sensor 型号未定；device 路径与格式以实际板卡 BSP 为准）
+# ---------------------------------------------------------------
+cameras:
+  camera0:
+    device: /dev/video0        # UNVERIFIED
+    width: 1920                # UNVERIFIED
+    height: 1080               # UNVERIFIED
+    fps: 30                    # UNVERIFIED
+    pixel_format: nv12         # UNVERIFIED：MIPI/ISP 输出格式以 BSP 为准
+    exposure_us: 0             # 0 = 自动曝光
+  camera1:
+    device: /dev/video1        # UNVERIFIED
+    width: 1920
+    height: 1080
+    fps: 30
+    pixel_format: nv12
+    exposure_us: 0
+
+# ---------------------------------------------------------------
+# 双画面合成与同步
+# ---------------------------------------------------------------
+composition:
+  mode: composite              # composite | independent | single
+  layout: side_by_side         # side_by_side | top_bottom | grid
+  output_width: 1920
+  output_height: 1080
+  sync_tolerance_ms: 40        # 双路时间戳最大容差
+  sync_policy: drop_oldest     # 超容差时丢弃旧帧（配合 timestamp_aligner）
+
+# ---------------------------------------------------------------
+# 编码
+# ---------------------------------------------------------------
+encoder:
+  codec: h264                  # h264 | h265
+  width: 1920
+  height: 1080
+  fps: 30
+  bitrate_bps: 2000000
+  gop: 60
+  rc_mode: cbr                 # cbr | vbr
+  profile: high
+
+# ---------------------------------------------------------------
+# 网络/推流（地址均为占位符；绑定端口与鉴权按部署环境配置）
+# ---------------------------------------------------------------
+network:
+  rtsp:
+    enabled: true
+    port: 8554
+    app: live
+    stream: composite
+  webrtc:
+    enabled: false
+    http_port: 8000
+  rtmp:
+    enabled: false
+    url: "rtmp://RTMP_SERVER_PLACEHOLDER/live/composite"   # 占位符，不得提交真实地址
+  mqtt:
+    enabled: false
+    broker: "mqtt://MQTT_BROKER_PLACEHOLDER:1883"          # 占位符
+    tls: false
+  http:
+    enabled: false
+    port: 8080
+
+# ---------------------------------------------------------------
+# 模型（Grooming/Feeding/Rearing 模型文件尚未提供：接口与 manifest 模板见 models/）
+# ---------------------------------------------------------------
+models:
+  enabled: false
+  manifest_dir: models/manifests
+  scheduler:
+    strategy: round_robin     # round_robin | priority | per_camera
+    infer_fps: 10             # 推流与推理解耦
+  grooming:
+    enabled: false
+    manifest: ""
+  feeding:
+    enabled: false
+    manifest: ""
+  rearing:
+    enabled: false
+    manifest: ""
+
+# ---------------------------------------------------------------
+# 传感器
+# ---------------------------------------------------------------
+sensors:
+  mlx90640:
+    enabled: false
+    device: /dev/thermal0      # UNVERIFIED：驱动未实现（Phase 4）
+    refresh_rate_hz: 4
+    temperature_unit: celsius
+  htu21d:
+    enabled: false
+    iio_device: iio:device0    # UNVERIFIED：驱动未实现（Phase 4）
+    sample_interval_ms: 2000
+
+# ---------------------------------------------------------------
+# 外设（全部未接线，UNVERIFIED；接口/文档见 docs/hardware/）
+# ---------------------------------------------------------------
+peripherals:
+  can:
+    enabled: false
+    interface: can0            # UNVERIFIED
+    bitrate: 500000
+  rs485:
+    enabled: false
+    tty: /dev/ttyS0            # UNVERIFIED
+    baud: 9600
+    parity: none
+  gpio:
+    enabled: false
+    chip: gpiochip0            # UNVERIFIED
+  pwm:
+    enabled: false
+    channel: 0                 # UNVERIFIED
+  adc:
+    enabled: false
+    iio_device: iio:device1    # UNVERIFIED
+  rtc:
+    enabled: false
+    device: /dev/rtc0          # UNVERIFIED
+  eeprom:
+    enabled: false
+    device: ""                 # UNVERIFIED
+  watchdog:
+    enabled: false
+    device: /dev/watchdog      # UNVERIFIED
+    timeout_s: 15
+
+# ---------------------------------------------------------------
+# 存储 / 离线缓存
+# ---------------------------------------------------------------
+storage:
+  sqlite_path: data/animal_monitor.db
+  offline_queue_max_bytes: 67108864
+  video_clip_dir: data/clips
+  keep_event_clips: true
+
+# ---------------------------------------------------------------
+# OTA（安全要求见 docs/deployment/ota/；无板卡分区信息前仅接口）
+# ---------------------------------------------------------------
+ota:
+  enabled: false
+  base_url: "https://OTA_SERVER_PLACEHOLDER"   # 占位符
+  verify_signature: true
+  require_version_check: true
+
+# ---------------------------------------------------------------
+# 日志
+# ---------------------------------------------------------------
+logging:
+  level: info                  # debug | info | warning | error
+  file: ""                     # 留空 = stderr（轮转功能 planned）
+
+# ---------------------------------------------------------------
+# 健康监控
+# ---------------------------------------------------------------
+health:
+  interval_ms: 5000
+  cpu_temp_warn_c: 80
+  disk_free_warn_bytes: 1073741824
+
+# ---------------------------------------------------------------
+# 队列（每条流水线边必须定义容量与策略）
+# ---------------------------------------------------------------
+queues:
+  default_capacity: 8
+  default_policy: drop_oldest  # drop_oldest | drop_newest | reject | block
+
+# ---------------------------------------------------------------
+# 应用
+# ---------------------------------------------------------------
+app:
+  run_duration_ms: 2000        # 演示自动退出时长（0 = 一直运行直到退出信号）
+  mock_pipeline:               # 明确标注的 MOCK：仅验证基础设施接线，无真实硬件
+    enabled: true
+    producer_interval_ms: 10
+    duration_ms: 500           # 0 = 无限（Ctrl+C 退出）

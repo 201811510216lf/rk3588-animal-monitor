@@ -1,0 +1,65 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 16,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "host-msvc",
+      "displayName": "Host (Windows, MSVC + Ninja)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ANIMAL_MONITOR_ENABLE_TARGET_DEPS": "OFF",
+        "ANIMAL_MONITOR_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "host-msvc-debug",
+      "displayName": "Host (Windows, MSVC + Ninja, Debug)",
+      "inherits": "host-msvc",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "target-rk3588",
+      "displayName": "Target (RK3588, aarch64 Linux cross)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-rk3588",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/rk3588-aarch64-linux-gnu.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ANIMAL_MONITOR_ENABLE_TARGET_DEPS": "ON",
+        "ANIMAL_MONITOR_BUILD_TESTS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "host-msvc",
+      "configurePreset": "host-msvc"
+    },
+    {
+      "name": "host-msvc-debug",
+      "configurePreset": "host-msvc-debug"
+    },
+    {
+      "name": "target-rk3588",
+      "configurePreset": "target-rk3588"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host-msvc",
+      "configurePreset": "host-msvc",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

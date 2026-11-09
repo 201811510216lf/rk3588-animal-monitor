@@ -1,0 +1,35 @@
+# 板卡 profile 模板
+# 使用方法：确定真实板卡与原理图后，复制本文件为 <board>.yaml 并逐项填写；
+# 每项必须同时给出依据（原理图页码 / BSP 配置 / 实测），否则保持 UNVERIFIED。
+
+board:
+  name: ""               # 例如 firefly-itx-3588j
+  soc: RK3588
+  board_vendor: ""
+  board_model: ""
+
+camera_topology:
+  camera0:
+    mipi_phy: UNVERIFIED         # 依据：原理图/BSP
+    lanes: UNVERIFIED
+    sensor_model: UNVERIFIED
+    sensor_i2c_bus: UNVERIFIED
+    sensor_i2c_addr: UNVERIFIED
+  camera1:
+    mipi_phy: UNVERIFIED
+    lanes: UNVERIFIED
+    sensor_model: UNVERIFIED
+    sensor_i2c_bus: UNVERIFIED
+    sensor_i2c_addr: UNVERIFIED
+
+bus:
+  i2c0: UNVERIFIED
+  i2c1: UNVERIFIED
+  spi0: UNVERIFIED
+  uart0: UNVERIFIED
+
+gpio:
+  irq_line: UNVERIFIED
+  fan_pwm: UNVERIFIED
+
+hardware_status: UNVERIFIED

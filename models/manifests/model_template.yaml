@@ -1,0 +1,48 @@
+# 模型 manifest 模板（model_template.yaml）
+
+# 必填：model_id / file / sha256 / rknn 兼容信息 / 输入 / 输出 / 类别映射 / 阈值 / 版本。
+# 未提供的字段保持空/UNKNOWN，禁止编造。
+
+model_id: ""                # 例如 grooming_v1
+model_kind: behavior        # behavior | detector | thermal_supplement
+task: ""                    # 例如 grooming / feeding / rearing
+file: ""                    # 模型文件路径（仓库外存储）
+sha256: ""                  # 必须为真实 SHA256
+
+rknn:
+  sdk_version: UNKNOWN      # rknn_api 版本（如 1.6.0）
+  driver_version: UNKNOWN   # 板上 rknn_server/NPU driver 版本
+  npu_core_mask: 7          # RK3588 三核位掩码（实测决定）
+  wants_float: false        # 是否浮点输出
+
+input:
+  - name: images
+    shape: [1, 640, 640, 3] # NHWC（以 rknn_query 实测为准，UNVERIFIED）
+    layout: NHWC
+    data_type: uint8
+    color_format: RGB
+    letterbox: false        # 预处理策略（letterbox/stretch，可配置）
+    mean: []
+    std: []
+
+output:
+  - name: output0
+    shape: UNKNOWN          # 以 rknn_query 实测为准
+    data_type: int8
+    quantization_scale: UNKNOWN
+    quantization_zp: UNKNOWN
+    postprocess: yolov5     # yolov5 | behavior_head | UNKNOWN
+  - name: output1
+    shape: UNKNOWN
+    postprocess: yolov5
+  - name: output2
+    shape: UNKNOWN
+    postprocess: yolov5
+
+classes: []                 # 类别映射（行为模型语义待模型提供方确认）
+thresholds:
+  confidence: 0.25
+  nms: 0.45
+
+version: ""
+status: UNKNOWN             # 未实测/未确认一律 UNKNOWN

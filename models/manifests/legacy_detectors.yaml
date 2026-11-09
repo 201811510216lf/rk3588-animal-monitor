@@ -1,0 +1,51 @@
+# 遗留检测模型登记（legacy_detectors.yaml）
+
+# 来源：源项目 A（多路视频\model），版权方 HeXiaotian，许可：学习/研究限定。
+# 仅登记审计事实；迁移/使用前必须完成许可授权（风险 R-01）。
+# 契约提取自 A/B 的 rknnPool.hpp 与 postprocess.cpp（真实代码依据）。
+
+models:
+  - model_id: person_relu
+    file: "多路视频/model/person_relu.rknn"
+    sha256: NOT_COMPUTED      # 迁移前必须补算真实 SHA256
+    input: {shape: [1, 640, 640, 3], layout: NHWC, data_type: uint8, color_format: RGB, letterbox: false}
+    output: {heads: 3, strides: [8, 16, 32], postprocess: yolov5_quantized, data_type: int8}
+    classes: ["person"]
+    thresholds: {confidence: 0.25, nms: 0.45}
+    npu_core_mask: 0          # 实例号轮转 0/1/2
+    provenance: A\model\person_relu.rknn（另有副本于 demo_multhread_decode_infer\model\RK3588）
+  - model_id: helmet_relu
+    file: "多路视频/model/helmet_relu.rknn"
+    sha256: NOT_COMPUTED
+    input: {shape: [1, 640, 640, 3], layout: NHWC, data_type: uint8, color_format: RGB, letterbox: false}
+    output: {heads: 3, strides: [8, 16, 32], postprocess: yolov5_quantized, data_type: int8}
+    classes: ["helmet"]
+    thresholds: {confidence: 0.25, nms: 0.45}
+    npu_core_mask: 1
+    provenance: A\model\helmet_relu.rknn
+  - model_id: tired_relu
+    file: "多路视频/model/tired_relu.rknn"
+    sha256: NOT_COMPUTED
+    input: {shape: [1, 640, 640, 3], layout: NHWC, data_type: uint8, color_format: RGB, letterbox: false}
+    output: {heads: 3, strides: [8, 16, 32], postprocess: yolov5_quantized, data_type: int8}
+    classes: ["tired"]
+    thresholds: {confidence: 0.25, nms: 0.45}
+    npu_core_mask: 2
+    provenance: A\model\tired_relu.rknn（B 代码中已注释掉）
+  - model_id: callplay_relu
+    file: "多路视频/model/callplay_relu.rknn"
+    sha256: NOT_COMPUTED
+    input: {shape: [1, 640, 640, 3], layout: NHWC, data_type: uint8, color_format: RGB, letterbox: false}
+    output: {heads: 3, strides: [8, 16, 32], postprocess: yolov5_quantized, data_type: int8}
+    classes: ["callplay"]
+    thresholds: {confidence: 0.25, nms: 0.45}
+    npu_core_mask: 2
+    provenance: A\model\callplay_relu.rknn
+  - model_id: yolov5s_unused
+    file: "多路视频/demo_multhread_decode_infer/model/RK3588/{yolov5s-640-640.rknn, yolov5s.rknn}"
+    sha256: NOT_COMPUTED
+    note: 未被任何代码入口使用，仅登记存在性
+    provenance: A\demo_multhread_decode_infer\model\RK3588
+
+# 三行为模型（Grooming/Feeding/Rearing）：文件不存在；只建接口与 manifest 模板，
+# 禁止编造模型结构与推理结果。

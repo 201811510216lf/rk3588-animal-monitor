@@ -1,0 +1,19 @@
+NOTICE — RK3588 Animal Behavior & Thermal Monitoring Platform
+
+本项目为本整合工程新建仓库。以下声明适用于本仓库的代码来源与许可边界：
+
+1. 本仓库中新编写的代码采用 Apache License 2.0（见 LICENSE）。
+
+2. 源项目 A（多路视频，版权方 HeXiaotian，2025）与源项目 B
+   （demo_multhread_decode_infer_mulmodel，为其子目录）的原始许可为：
+   仅限个人学习、学术研究或内部评估使用；禁止未经版权方书面许可的商用、
+   再分发、转售及以再分发或商用为目的的衍生开发。
+   从 A/B 迁移、改写或参考派生的任何代码，须保留原始版权声明与许可，
+   并记录出处（见 docs/migration/source_audit.md）。
+   商用落地前必须完成许可清理并取得版权方书面授权。
+
+3. 参考仓库 JoeChen2me/RK-MediaProject 仅用于代码风格与架构参考，
+   未直接复制其实现。
+
+4. 本项目不包含任何第三方 SDK 动态库、模型大文件或凭据。
+   第三方依赖的许可信息将在引入时记录于 third_party/ 目录。

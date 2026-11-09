@@ -1,0 +1,38 @@
+# 通用 RK3588 板卡 profile
+# 状态：UNVERIFIED —— 板卡型号/Sensor/GPIO/DTS 尚未确定，本文件仅提供配置结构，
+# 不声称任何硬件已接线或已验证。确定板卡后按 board-template.yaml 填写并实测。
+
+board:
+  name: generic-rk3588
+  soc: RK3588
+  board_vendor: UNVERIFIED
+  board_model: UNVERIFIED
+
+# ISP / MIPI（全部 UNVERIFIED；禁止臆造 lane 数、clock、regulator）
+camera_topology:
+  camera0:
+    mipi_phy: UNVERIFIED
+    lanes: UNVERIFIED
+    sensor_model: UNVERIFIED
+    sensor_i2c_bus: UNVERIFIED
+    sensor_i2c_addr: UNVERIFIED
+  camera1:
+    mipi_phy: UNVERIFIED
+    lanes: UNVERIFIED
+    sensor_model: UNVERIFIED
+    sensor_i2c_bus: UNVERIFIED
+    sensor_i2c_addr: UNVERIFIED
+
+# 外设总线映射（全部 UNVERIFIED）
+bus:
+  i2c0: UNVERIFIED
+  i2c1: UNVERIFIED
+  spi0: UNVERIFIED
+  uart0: UNVERIFIED
+
+gpio:
+  # 名称与编号以原理图为准，禁止臆造
+  irq_line: UNVERIFIED
+  fan_pwm: UNVERIFIED
+
+hardware_status: UNVERIFIED

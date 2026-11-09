@@ -1,0 +1,34 @@
+# Build outputs
+build/
+build-*/
+out/
+bin/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+compile_commands.json
+CMakeUserPresets.json
+
+# OS
+Thumbs.db
+.DS_Store
+
+# 内部交接材料（不上传 GitHub；本地保留）
+RK3588_动物检测推理_Codex开发交接包/
+RK3588_动物检测推理_Codex开发交接包.zip
+
+# Runtime data
+logs/
+data/
+*.sqlite
+*.db
