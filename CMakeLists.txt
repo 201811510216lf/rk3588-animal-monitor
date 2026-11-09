@@ -95,9 +95,15 @@ add_executable(animal_monitor_app
     src/app/application.cpp
     src/app/mock_pipeline_service.cpp
     src/app/video_pipeline_service.cpp
-    src/app/pipeline_factory_host.cpp
 )
 target_link_libraries(animal_monitor_app PRIVATE animal_monitor_core)
+
+# 流水线工厂二选一：host 用 MOCK 实现，目标板用 V4L2/MPP/ZLM 真实实现
+if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
+    target_sources(animal_monitor_app PRIVATE src/app/pipeline_factory_target.cpp)
+else()
+    target_sources(animal_monitor_app PRIVATE src/app/pipeline_factory_host.cpp)
+endif()
 
 # ============================================================
 # Rockchip 依赖探测（默认关闭；打开后缺失则报错，见 Find 模块）
@@ -107,6 +113,10 @@ if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
     find_package(RockchipRGA REQUIRED)
     find_package(Rknn REQUIRED)
     find_package(Zlm REQUIRED)
+    find_library(LIBGPIOD_LIBRARY NAMES gpiod libgpiod)
+    if(NOT LIBGPIOD_LIBRARY)
+        message(FATAL_ERROR "gpio_client 需要 libgpiod（gpiod），请安装开发包（UNVERIFIED 路径）")
+    endif()
 
     # Phase 2 目标板媒体适配器（V4L2/MPP/RGA/ZLM；未经板卡编译验证）
     target_sources(animal_monitor_core PRIVATE
@@ -115,7 +125,6 @@ if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
         src/media/mpp_encoder.cpp
         src/media/rga_processor.cpp
         src/media/stream_publisher.cpp
-        src/media/dma_heap_allocator.cpp
     )
     # Phase 3 目标板推理运行时
     target_sources(animal_monitor_core PRIVATE
@@ -137,23 +146,21 @@ if(ANIMAL_MONITOR_ENABLE_TARGET_DEPS)
         src/device/eeprom_client.cpp
         src/device/watchdog_client.cpp
     )
-    # 目标板流水线工厂（真实 V4L2/MPP/ZLM 实现）
-    target_sources(animal_monitor_app PRIVATE src/app/pipeline_factory_target.cpp)
 
     target_link_libraries(animal_monitor_core PUBLIC
         RockchipMPP::rockchip_mpp
         RockchipRGA::librga
         Rknn::rknnrt
-    )
-    target_link_libraries(animal_monitor_app PRIVATE
         Zlm::mk_api
         Zlm::ZLToolKit
         v4l2
+        ${LIBGPIOD_LIBRARY}
     )
-    target_compile_definitions(animal_monitor_app PRIVATE ANIMAL_MONITOR_HAS_TARGET_DEPS=1)
+    # rknn_runtime.h 以该宏守卫（#error）；对 core 及依赖它的目标均可见。
+    target_compile_definitions(animal_monitor_core PUBLIC ANIMAL_MONITOR_ENABLE_TARGET_DEPS=1)
     message(STATUS "Target deps enabled: MPP=${ROCKCHIP_MPP_INCLUDE_DIR} "
                    "RGA=${ROCKCHIP_RGA_INCLUDE_DIR} RKNN=${RKNN_INCLUDE_DIR} "
-                   "ZLM=${ZLM_INCLUDE_DIR}")
+                   "ZLM=${ZLM_INCLUDE_DIR} gpiod=${LIBGPIOD_LIBRARY}")
 endif()
 
 # ============================================================
